@@ -1,40 +1,53 @@
-import { Image, ScrollView, Text, View } from 'react-native';
+import styled from 'styled-components/native';
 
+import Header from '../components/Header';
+import ProfesionalCard from '../components/ProfesionalCard';
 import { profesionales } from '../data/profesionales';
+
+const Pantalla = styled.ScrollView`
+  background-color: #f5f7f8;
+`;
+
+// El padding vive en un View interno y no en el ScrollView: así el fondo
+// cubre toda la pantalla y el espaciado acompaña al contenido al scrollear.
+const Contenido = styled.View`
+  padding-horizontal: 20px;
+  padding-top: 56px;
+  padding-bottom: 32px;
+`;
+
+const TituloSeccion = styled.Text`
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  color: #7a8a93;
+  margin-bottom: 14px;
+`;
 
 export default function Home() {
   return (
-    <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 64 }}>
-      <View style={{ alignItems: 'center', marginBottom: 32 }}>
-        <Text style={{ fontSize: 24, fontWeight: 'bold' }}>YoSoy</Text>
-        <Text style={{ fontSize: 16, textAlign: 'center', marginTop: 8 }}>
-          Profesionales disponibles
-        </Text>
-      </View>
+    <Pantalla>
+      <Contenido>
+        <Header
+          titulo="YoSoy"
+          subtitulo="Acompañamiento en salud mental, cerca tuyo."
+        />
 
-      <View>
+        <TituloSeccion>PROFESIONALES DISPONIBLES</TituloSeccion>
+
         {profesionales.map((profesional) => (
-          <View
+          <ProfesionalCard
             key={profesional.id}
-            style={{ flexDirection: 'row', marginBottom: 20, alignItems: 'flex-start' }}
-          >
-            <Image
-              source={{ uri: profesional.avatar }}
-              style={{ width: 56, height: 56, borderRadius: 28, marginRight: 12 }}
-            />
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600' }}>
-                {profesional.nombre} {profesional.apellido}
-              </Text>
-              <Text style={{ fontSize: 13, marginTop: 2 }}>
-                {profesional.especialidad} · {profesional.matricula}
-              </Text>
-              <Text style={{ fontSize: 13, marginTop: 2 }}>{profesional.modalidad}</Text>
-              <Text style={{ fontSize: 13, marginTop: 4 }}>{profesional.descripcion}</Text>
-            </View>
-          </View>
+            nombre={profesional.nombre}
+            apellido={profesional.apellido}
+            matricula={profesional.matricula}
+            especialidad={profesional.especialidad}
+            modalidad={profesional.modalidad}
+            avatar={profesional.avatar}
+            descripcion={profesional.descripcion}
+          />
         ))}
-      </View>
-    </ScrollView>
+      </Contenido>
+    </Pantalla>
   );
 }
