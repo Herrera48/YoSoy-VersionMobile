@@ -3,13 +3,17 @@ export interface Especialidad {
   nombre: string;
 }
 
+export type Modalidad = 'Virtual' | 'Presencial';
+
+export type VarianteBadge = 'especialidad' | 'modalidad';
+
 export interface Profesional {
   id: string;
   nombre: string;
   apellido: string;
   matricula: string;
   especialidad: string;
-  modalidad: 'Virtual' | 'Presencial';
+  modalidad: Modalidad;
   avatar: string;
   descripcion: string;
 }
