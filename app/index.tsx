@@ -2,26 +2,27 @@ import styled from 'styled-components/native';
 
 import Header from '../components/Header';
 import ProfesionalCard from '../components/ProfesionalCard';
+import { theme } from '../constants/theme';
 import { profesionales } from '../data/profesionales';
 
 const Pantalla = styled.ScrollView`
-  background-color: #f5f7f8;
+  background-color: ${theme.colores.fondo};
 `;
 
 // El padding vive en un View interno y no en el ScrollView: así el fondo
 // cubre toda la pantalla y el espaciado acompaña al contenido al scrollear.
 const Contenido = styled.View`
-  padding-horizontal: 20px;
+  padding-horizontal: ${theme.espaciado.xl}px;
   padding-top: 56px;
-  padding-bottom: 32px;
+  padding-bottom: ${theme.espaciado.xxxl}px;
 `;
 
 const TituloSeccion = styled.Text`
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  color: #7a8a93;
-  margin-bottom: 14px;
+  font-size: ${theme.fuentes.sm}px;
+  font-weight: ${theme.pesos.bold};
+  letter-spacing: ${theme.espaciadoLetra.amplio}px;
+  color: ${theme.colores.violetaOscuro};
+  margin-bottom: ${theme.espaciado.lg}px;
 `;
 
 export default function Home() {
