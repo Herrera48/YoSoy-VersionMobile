@@ -1,7 +1,7 @@
 import styled from 'styled-components/native';
 
-import Badge from './Badge';
 import { Modalidad } from '../types';
+import Badge from './Badge';
 
 // Componente presentacional puro: todos los datos llegan por props, no lee
 // nada de data/. Así se puede reutilizar con cualquier origen de datos.
