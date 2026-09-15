@@ -27,9 +27,12 @@ const Marca = styled.View`
   align-items: center;
 `;
 
+// 60px compensa el padding transparente del lienzo: el dibujo ocupa 327x301
+// de un PNG de 500x500, así que el cerebro queda en ~46px efectivos y se
+// equilibra con la tipografía del título.
 const Logo = styled.Image`
-  width: 46px;
-  height: 46px;
+  width: 60px;
+  height: 60px;
   margin-right: ${theme.espaciado.md}px;
   resize-mode: contain;
 `;
