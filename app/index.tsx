@@ -1,3 +1,4 @@
+import { useRouter } from 'expo-router';
 import { FlatList } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -56,6 +57,8 @@ function ListaVacia() {
 }
 
 export default function Home() {
+  const router = useRouter();
+
   return (
     <Lista
       data={profesionales}
@@ -71,6 +74,12 @@ export default function Home() {
           modalidad={item.modalidad}
           avatar={item.avatar}
           descripcion={item.descripcion}
+          onPress={() =>
+            router.push({
+              pathname: '/profesional/[id]',
+              params: { id: item.id },
+            })
+          }
         />
       )}
     />

@@ -6,6 +6,8 @@ import Badge from './Badge';
 
 // Componente presentacional puro: todos los datos llegan por props, no lee
 // nada de data/. Así se puede reutilizar con cualquier origen de datos.
+// Tampoco sabe a dónde navega: la acción al tocarla llega como onPress y la
+// decide la pantalla que la usa.
 interface ProfesionalCardProps {
   nombre: string;
   apellido: string;
@@ -14,12 +16,13 @@ interface ProfesionalCardProps {
   modalidad: Modalidad;
   avatar: string;
   descripcion: string;
+  onPress: () => void;
 }
 
 // Card blanca sobre el lavanda del fondo. El contraste lo dan tres cosas
 // juntas: el blanco puro, el borde sutil y una sombra suave.
 // La sombra se declara para iOS (shadow-*) y para Android (elevation).
-const Tarjeta = styled.View`
+const Tarjeta = styled.TouchableOpacity`
   background-color: ${theme.colores.card};
   border-radius: ${theme.radios.lg}px;
   border-width: 1px;
@@ -88,9 +91,15 @@ export default function ProfesionalCard({
   modalidad,
   avatar,
   descripcion,
+  onPress,
 }: ProfesionalCardProps) {
   return (
-    <Tarjeta>
+    <Tarjeta
+      activeOpacity={0.7}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Ver detalle de ${nombre} ${apellido}`}
+    >
       <Encabezado>
         <Avatar source={{ uri: avatar }} />
         <Identidad>
