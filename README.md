@@ -28,6 +28,7 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 - Agustín Herrera
 - Santiago Mantovani
 - Jorge Torcigliani - 31619
+- Mariana Gallo - 30919
 
 ## Stack
 
