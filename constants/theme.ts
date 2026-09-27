@@ -41,6 +41,9 @@ export const theme = {
     xl: 20,
     xxl: 24,
     xxxl: 32,
+    // Aire superior de cada pantalla para no quedar debajo de la barra de
+    // estado. Lo comparten el listado y el detalle.
+    superiorPantalla: 56,
   },
 
   // Radios de esquina en px.

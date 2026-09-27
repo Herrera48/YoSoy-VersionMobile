@@ -1,20 +1,24 @@
+import { FlatList } from 'react-native';
 import styled from 'styled-components/native';
 
 import Header from '../components/Header';
 import ProfesionalCard from '../components/ProfesionalCard';
 import { theme } from '../constants/theme';
 import { profesionales } from '../data/profesionales';
+import { Profesional } from '../types';
 
-const Pantalla = styled.ScrollView`
+// FlatList reemplaza al ScrollView: ya scrollea por sí misma, y anidarla dentro
+// de un ScrollView anula el virtualizado (renderizaría todas las cards juntas).
+// El padding va en contentContainerStyle para que acompañe al contenido al
+// scrollear; con styled-components se declara vía attrs.
+const Lista = styled(FlatList<Profesional>).attrs({
+  contentContainerStyle: {
+    paddingHorizontal: theme.espaciado.xl,
+    paddingTop: theme.espaciado.superiorPantalla,
+    paddingBottom: theme.espaciado.xxxl,
+  },
+})`
   background-color: ${theme.colores.fondo};
-`;
-
-// El padding vive en un View interno y no en el ScrollView: así el fondo
-// cubre toda la pantalla y el espaciado acompaña al contenido al scrollear.
-const Contenido = styled.View`
-  padding-horizontal: ${theme.espaciado.xl}px;
-  padding-top: 56px;
-  padding-bottom: ${theme.espaciado.xxxl}px;
 `;
 
 const TituloSeccion = styled.Text`
@@ -25,30 +29,50 @@ const TituloSeccion = styled.Text`
   margin-bottom: ${theme.espaciado.lg}px;
 `;
 
+const MensajeVacio = styled.Text`
+  font-size: ${theme.fuentes.md}px;
+  line-height: ${theme.interlineado.md}px;
+  color: ${theme.colores.textoSecundario};
+  text-align: center;
+  margin-top: ${theme.espaciado.xxxl}px;
+`;
+
+function EncabezadoLista() {
+  return (
+    <>
+      <Header
+        titulo="YoSoy"
+        subtitulo="Acompañamiento en salud mental, cerca tuyo."
+      />
+      <TituloSeccion>PROFESIONALES DISPONIBLES</TituloSeccion>
+    </>
+  );
+}
+
+function ListaVacia() {
+  return (
+    <MensajeVacio>No hay profesionales disponibles por el momento.</MensajeVacio>
+  );
+}
+
 export default function Home() {
   return (
-    <Pantalla>
-      <Contenido>
-        <Header
-          titulo="YoSoy"
-          subtitulo="Acompañamiento en salud mental, cerca tuyo."
+    <Lista
+      data={profesionales}
+      keyExtractor={(profesional) => profesional.id}
+      ListHeaderComponent={EncabezadoLista}
+      ListEmptyComponent={ListaVacia}
+      renderItem={({ item }) => (
+        <ProfesionalCard
+          nombre={item.nombre}
+          apellido={item.apellido}
+          matricula={item.matricula}
+          especialidad={item.especialidad}
+          modalidad={item.modalidad}
+          avatar={item.avatar}
+          descripcion={item.descripcion}
         />
-
-        <TituloSeccion>PROFESIONALES DISPONIBLES</TituloSeccion>
-
-        {profesionales.map((profesional) => (
-          <ProfesionalCard
-            key={profesional.id}
-            nombre={profesional.nombre}
-            apellido={profesional.apellido}
-            matricula={profesional.matricula}
-            especialidad={profesional.especialidad}
-            modalidad={profesional.modalidad}
-            avatar={profesional.avatar}
-            descripcion={profesional.descripcion}
-          />
-        ))}
-      </Contenido>
-    </Pantalla>
+      )}
+    />
   );
 }
