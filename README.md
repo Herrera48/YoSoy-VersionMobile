@@ -25,9 +25,8 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 
 ## Integrantes del grupo
 
-- Nombre Apellido — legajo
-- Nombre Apellido — legajo
-- Nombre Apellido — legajo
+- Agustín Herrera
+- Santiago Mantovani
 
 ## Stack
 
@@ -40,17 +39,17 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 
 | # | Feature | Estado |
 |---|---------|--------|
-| 1 | Consultar profesionales disponibles | En desarrollo — vista estática |
+| 1 | Consultar profesionales disponibles | En desarrollo — listado con FlatList y pantalla de detalle |
 | 2 | Buscar y filtrar profesionales por especialidad | Pendiente |
 | 3 | Solicitar un turno | Pendiente |
 | 4 | Consultar mis turnos | Pendiente |
 | 5 | Cancelar un turno | Pendiente |
 | 6 | Registrar mi estado de ánimo diario | Pendiente |
 
-La Feature 1 muestra el listado completo de profesionales a partir de datos
-estáticos definidos en `data/profesionales.ts`. Es una vista de solo lectura:
-todavía no hay búsqueda, detalle del profesional ni conexión a un backend.
-Ninguna feature está terminada.
+La Feature 1 muestra el listado de profesionales con `FlatList` y, al tocar
+una card, navega a una pantalla de detalle con todos sus datos. Los datos
+siguen siendo estáticos (`data/profesionales.ts`): todavía no hay búsqueda ni
+conexión a un backend. Ninguna feature está terminada.
 
 ## Cómo levantar el proyecto
 
@@ -99,47 +98,54 @@ de `ERESOLVE` entre los peers opcionales de Expo (`react-native-worklets`).
 `legacy-peer-deps=true` le devuelve a npm el comportamiento de la v6 —no
 instalar peers automáticamente— y deja el árbol limpio.
 
-## Unidad I
+## Contenidos aplicados por unidad
 
-Contenidos de la unidad aplicados en el código, y dónde:
+### Unidad I
 
 | Contenido | Dónde |
 |-----------|-------|
-| `View` | `styled.View` en [Badge.tsx](components/Badge.tsx), [Header.tsx](components/Header.tsx), [ProfesionalCard.tsx](components/ProfesionalCard.tsx) e [index.tsx](app/index.tsx) |
-| `Text` | `styled.Text` en los tres componentes y en el título de sección de [index.tsx](app/index.tsx) |
-| `Image` | avatar del profesional en [ProfesionalCard.tsx](components/ProfesionalCard.tsx) (`styled.Image` con `source={{ uri }}`) |
-| `ScrollView` | [index.tsx](app/index.tsx) — envuelve todo el contenido de la pantalla, una sola vez |
+| `View` | `styled.View` en [Badge.tsx](components/Badge.tsx), [Header.tsx](components/Header.tsx), [ProfesionalCard.tsx](components/ProfesionalCard.tsx) y las pantallas |
+| `Text` | `styled.Text` en los tres componentes y en las dos pantallas |
+| `Image` | avatar del profesional en [ProfesionalCard.tsx](components/ProfesionalCard.tsx) y en el detalle; logo en [Header.tsx](components/Header.tsx) |
+| `ScrollView` | [profesional/[id].tsx](app/profesional/[id].tsx) — envuelve el detalle. En el listado lo reemplazó `FlatList` (ver Unidad II) |
 | Datos estáticos | [data/profesionales.ts](data/profesionales.ts) (8 profesionales) y [data/especialidades.ts](data/especialidades.ts) |
 | Componentes reutilizables | [components/](components/) — `ProfesionalCard`, `Badge` y `Header` |
 | Props | interfaces de props explícitas en TypeScript en los tres componentes; tipos de dominio en [types/index.ts](types/index.ts) |
-| Styled Components | `styled-components/native` en todos los componentes y en la pantalla. No quedan estilos inline |
-
-### Decisiones de la unidad
-
-**Listado con `.map()`.** El recorrido del arreglo de profesionales se hace
-con `.map()` y `key={profesional.id}`, no con `FlatList`: las listas
-optimizadas son contenido de la Unidad IV.
+| Styled Components | `styled-components/native` en todos los componentes y pantallas, con los valores de diseño centralizados en [constants/theme.ts](constants/theme.ts). No hay estilos inline ni colores sueltos |
 
 **`ProfesionalCard` es un componente presentacional puro.** Recibe todos sus
 datos por props y no importa nada de `data/`. Así el mismo componente sirve
-para el listado completo de hoy, para un resultado de búsqueda filtrada
-(Feature 2) y para datos que en la Unidad V lleguen de una API, sin
-modificarlo.
+para el listado de hoy, para un resultado de búsqueda filtrada (Feature 2) y
+para datos que más adelante lleguen de una API, sin modificarlo.
 
-**Uso de Flexbox.** El layout usa tres propiedades flex básicas:
-`flex-direction`, `align-items` y `flex`. En React Native todo `View` es un
-contenedor flex por defecto, así que no existe layout posible sin ellas: son
-parte del modelo de caja de la plataforma, no una técnica aparte. El dominio
-de Flexbox —`justify-content`, `flex-wrap`, `gap` y alineaciones
-compuestas— se trabaja en la Unidad II.
+**`TextInput` todavía no se usa.** La pantalla actual es de solo lectura.
+Entra con la Feature 2 (búsqueda de profesionales).
 
-**Todavía no se usa `TextInput`.** Está habilitado en la Unidad I, pero la
-pantalla actual es de solo lectura. Entra con la Feature 2 (búsqueda de
-profesionales).
+### Unidad II
 
-### Fuera de alcance en esta entrega
+| Contenido | Dónde |
+|-----------|-------|
+| `FlatList` | [index.tsx](app/index.tsx) — listado con `keyExtractor`, `ListHeaderComponent` (Header y título de sección) y `ListEmptyComponent` |
+| `TouchableOpacity` | [ProfesionalCard.tsx](components/ProfesionalCard.tsx) (toda la card es tocable) y botón de volver en el detalle |
+| Expo Router — `Stack` | [_layout.tsx](app/_layout.tsx) — da la transición nativa y el gesto de volver |
+| Ruta dinámica | [profesional/[id].tsx](app/profesional/[id].tsx) — lee el id con `useLocalSearchParams` y busca el profesional en `data/` |
+| `useRouter` | `router.push` al detalle desde el listado; `router.back()` para volver |
+| Flexbox | `flex-direction`, `align-items`, `justify-content` y `align-self` en las cards y el detalle |
 
-No se usan `FlatList`, `SectionList`, `SafeAreaView`, navegación entre
-pantallas, `fetch`/Axios, manejo de estado global, persistencia local,
-animaciones ni librerías de UI externas. Todo eso corresponde a unidades
-posteriores.
+**El listado pasó de `.map()` a `FlatList`.** `FlatList` virtualiza: solo
+renderiza las cards visibles. Por eso se quitó el `ScrollView` del listado:
+anidar una `FlatList` dentro de un `ScrollView` anula el virtualizado.
+
+**La navegación la decide la pantalla, no la card.** `ProfesionalCard` recibe
+un `onPress` por props y el `router.push` vive en [index.tsx](app/index.tsx).
+Así la card sigue sin saber nada de rutas.
+
+**El botón de volver contempla que no haya historial.** Si se entra directo
+al detalle por un deep link, no hay pantalla anterior; en ese caso vuelve al
+listado con `router.replace('/')` en lugar de `router.back()`.
+
+### Pendiente de la Unidad II
+
+- **Zustand** y **`LinearGradient`**: en curso.
+- **TanStack Query** y **`ActivityIndicator`**: quedan para cuando la app se
+  conecte a un backend. Con datos locales no hay carga asíncrona que manejar.
