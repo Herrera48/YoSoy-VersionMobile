@@ -25,10 +25,11 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 
 ## Integrantes del grupo
 
-- Agustín Herrera
-- Santiago Mantovani
+- Agustín Herrera - 31260
+- Santiago Mantovani - (legajo pendiente)
 - Jorge Torcigliani - 31619
 - Mariana Gallo - 30919
+- Alejandra Armas - 30990
 
 ## Stack
 
@@ -37,7 +38,7 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 - TypeScript
 - Styled Components (`styled-components/native`)
 - TanStack Query (`@tanstack/react-query`) — pedidos de datos y caché
-- Zustand — estado global de los filtros
+- Zustand — estado global de los filtros del listado y de la sesión
 - `@expo/vector-icons` — íconos
 
 ## Features
@@ -93,8 +94,8 @@ está terminada.
 ### Instalación
 
 ```bash
-git clone https://github.com/Herrera48/YoSoy-Mobile.git
-cd YoSoy-Mobile
+git clone https://github.com/Herrera48/YoSoy-VersionMobile.git
+cd YoSoy-VersionMobile
 npm install
 ```
 
@@ -140,7 +141,8 @@ app/
     ├── _layout.tsx        Redirige al login si no hay sesión
     ├── menu.tsx           /menu               Menú principal
     ├── profesionales.tsx  /profesionales      Listado con búsqueda y filtros
-    └── profesional/[id].tsx  /profesional/:id Detalle del profesional
+    ├── profesional/[id].tsx  /profesional/:id Detalle del profesional
+    └── solicitar-turno.tsx  /solicitar-turno  Calendario y agenda por hora
 ```
 
 - **Login → menú con `router.replace`**: una vez adentro, "volver" no
@@ -165,13 +167,13 @@ app/
 
 | Contenido | Dónde |
 |-----------|-------|
-| `View` | `styled.View` en [Badge.tsx](components/Badge.tsx), [Header.tsx](components/Header.tsx), [ProfesionalCard.tsx](components/ProfesionalCard.tsx) y las pantallas |
-| `Text` | `styled.Text` en los tres componentes y en las dos pantallas |
-| `Image` | avatar del profesional en [ProfesionalCard.tsx](components/ProfesionalCard.tsx) y en el detalle; logo en [Header.tsx](components/Header.tsx) |
-| `ScrollView` | [profesional/[id].tsx](app/(app)/profesional/[id].tsx) — envuelve el detalle. En el listado lo reemplazó `FlatList` (ver Unidad II) |
+| `View` | `styled.View` en los 13 componentes de [components/](components/) y en las 6 pantallas |
+| `Text` | `styled.Text` en los 13 componentes y en las 6 pantallas |
+| `Image` | avatar del profesional en [ProfesionalCard.tsx](components/ProfesionalCard.tsx), [ProfesionalOpcion.tsx](components/ProfesionalOpcion.tsx) y el detalle; logo en [Header.tsx](components/Header.tsx) y en el login |
+| `ScrollView` | envuelve el login, el recupero, el menú, el detalle y solicitar turno; en [FiltroEspecialidades.tsx](components/FiltroEspecialidades.tsx), horizontal para los chips. En el listado lo reemplazó `FlatList` (ver Unidad II) |
 | Datos estáticos | [data/profesionales.ts](data/profesionales.ts) (8 profesionales) y [data/especialidades.ts](data/especialidades.ts) |
-| Componentes reutilizables | [components/](components/) — `ProfesionalCard`, `Badge` y `Header` |
-| Props | interfaces de props explícitas en TypeScript en los tres componentes; tipos de dominio en [types/index.ts](types/index.ts) |
+| Componentes reutilizables | [components/](components/) — 13 componentes: `AgendaTurnos`, `Badge`, `BotonPrimario`, `BuscadorProfesionales`, `Calendario`, `CampoTexto`, `Chip`, `FiltroEspecialidades`, `GrillaHorarios`, `Header`, `MenuOpcion`, `ProfesionalCard` y `ProfesionalOpcion` |
+| Props | interfaces de props explícitas en TypeScript en los 13 componentes; tipos de dominio en [types/index.ts](types/index.ts) |
 | Styled Components | `styled-components/native` en todos los componentes y pantallas, con los valores de diseño centralizados en [constants/theme.ts](constants/theme.ts). No hay estilos inline ni colores sueltos |
 
 **`ProfesionalCard` es un componente presentacional puro.** Recibe todos sus
@@ -186,12 +188,23 @@ para datos que más adelante lleguen de una API, sin modificarlo.
 
 | Contenido | Dónde |
 |-----------|-------|
-| `FlatList` | [profesionales.tsx](app/(app)/profesionales.tsx) — listado con `keyExtractor`, `ListHeaderComponent` (Header y título de sección) y `ListEmptyComponent` |
+| `FlatList` | [profesionales.tsx](app/(app)/profesionales.tsx) — listado con `keyExtractor`, `ListHeaderComponent` (botón de volver, Header, buscador, chips de especialidad y título de sección) y `ListEmptyComponent` (carga, error, sin resultados) |
 | `TouchableOpacity` | [ProfesionalCard.tsx](components/ProfesionalCard.tsx) (toda la card es tocable) y botón de volver en el detalle |
 | Expo Router — `Stack` | [_layout.tsx](app/_layout.tsx) — da la transición nativa y el gesto de volver |
 | Ruta dinámica | [profesional/[id].tsx](app/(app)/profesional/[id].tsx) — lee el id con `useLocalSearchParams` y busca el profesional en `data/` |
 | `useRouter` | `router.push` al detalle desde el listado; `router.back()` para volver |
 | Flexbox | `flex-direction`, `align-items`, `justify-content` y `align-self` en las cards y el detalle |
+| `TextInput` | [BuscadorProfesionales.tsx](components/BuscadorProfesionales.tsx) — `value` + `onChangeText` sincronizados con el store |
+| `ScrollView` horizontal | [FiltroEspecialidades.tsx](components/FiltroEspecialidades.tsx) — fila de chips con `horizontal` y sin indicador de scroll |
+| `@expo/vector-icons` | `Ionicons` (lupa y botón de borrar) en el buscador |
+| `ActivityIndicator` | carga del listado en [profesionales.tsx](app/(app)/profesionales.tsx) y de los chips de especialidad |
+| TanStack Query — `useQuery` | `['profesionales', especialidad]` en [profesionales.tsx](app/(app)/profesionales.tsx) y `['especialidades']` en los chips. `QueryClientProvider` en [_layout.tsx](app/_layout.tsx) |
+| Zustand — `create()` / `set()` | [store/useFiltrosStore.ts](store/useFiltrosStore.ts) — texto de búsqueda y especialidad elegida; [store/useSesionStore.ts](store/useSesionStore.ts) — usuario logueado |
+| Grupos de rutas y `_layout` | [(app)/_layout.tsx](app/(app)/_layout.tsx) — agrupa las pantallas privadas |
+| `router.replace` | login → menú, para que no se pueda volver al login |
+| `Link` | "Olvidé mi contraseña" en el login |
+| `TextInput` — `secureTextEntry`, `keyboardType` | contraseña en el login; `email-address` en el recupero |
+| Componentes de formulario | [CampoTexto.tsx](components/CampoTexto.tsx) y [BotonPrimario.tsx](components/BotonPrimario.tsx), compartidos por login y recupero |
 
 **El listado pasó de `.map()` a `FlatList`.** `FlatList` virtualiza: solo
 renderiza las cards visibles. Por eso se quitó el `ScrollView` del listado:
@@ -204,18 +217,6 @@ Así la card sigue sin saber nada de rutas.
 **El botón de volver contempla que no haya historial.** Si se entra directo
 al detalle por un deep link, no hay pantalla anterior; en ese caso vuelve al
 listado con `router.replace('/profesionales')` en lugar de `router.back()`.
-
-| `TextInput` | [BuscadorProfesionales.tsx](components/BuscadorProfesionales.tsx) — `value` + `onChangeText` sincronizados con el store |
-| `ScrollView` horizontal | [FiltroEspecialidades.tsx](components/FiltroEspecialidades.tsx) — fila de chips con `horizontal` y sin indicador de scroll |
-| `@expo/vector-icons` | `Ionicons` (lupa y botón de borrar) en el buscador |
-| `ActivityIndicator` | carga del listado en [profesionales.tsx](app/(app)/profesionales.tsx) y de los chips de especialidad |
-| TanStack Query — `useQuery` | `['profesionales', especialidad]` en [profesionales.tsx](app/(app)/profesionales.tsx) y `['especialidades']` en los chips. `QueryClientProvider` en [_layout.tsx](app/_layout.tsx) |
-| Zustand — `create()` / `set()` | [store/useFiltrosStore.ts](store/useFiltrosStore.ts) — texto de búsqueda y especialidad elegida; [store/useSesionStore.ts](store/useSesionStore.ts) — usuario logueado |
-| Grupos de rutas y `_layout` | [(app)/_layout.tsx](app/(app)/_layout.tsx) — agrupa las pantallas privadas |
-| `router.replace` | login → menú, para que no se pueda volver al login |
-| `Link` | "Olvidé mi contraseña" en el login |
-| `TextInput` — `secureTextEntry`, `keyboardType` | contraseña en el login; `email-address` en el recupero |
-| Componentes de formulario | [CampoTexto.tsx](components/CampoTexto.tsx) y [BotonPrimario.tsx](components/BotonPrimario.tsx), compartidos por login y recupero |
 
 **La especialidad va en la `queryKey`, el texto no.** El filtro por
 especialidad lo resuelve el "servidor" (el servicio), como lo haría un
@@ -237,6 +238,5 @@ reemplazando a la lista.
 
 ### Pendiente de la Unidad II
 
-- **`LinearGradient`**: en curso.
 - **`useInfiniteQuery`**: con 8 profesionales no hay paginación que hacer;
   entra cuando el listado venga de un backend.
