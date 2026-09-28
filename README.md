@@ -26,7 +26,7 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 ## Integrantes del grupo
 
 - Agustín Herrera - 31260
-- Santiago Mantovani - (legajo pendiente)
+- Santiago Mantovani - 30937
 - Jorge Torcigliani - 31619
 - Mariana Gallo - 30919
 - Alejandra Armas - 30990
