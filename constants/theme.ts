@@ -23,7 +23,8 @@ export const theme = {
     // Mensajes de validación en formularios.
     error: '#DC2626',
 
-    // Texto sobre fondos de marca (chip de especialidad seleccionado).
+    // Texto sobre fondos de marca: degradado del Header, botón primario,
+    // chip, día y horario seleccionados.
     textoSobrePrimario: '#FFFFFF',
 
     // ── Bordes y sombra ────────────────────────────────────────────────
