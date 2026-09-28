@@ -14,11 +14,12 @@ interface HeaderProps {
   tagline?: string;
 }
 
-// Degradado azul → violeta, como en la web. Va de izquierda a derecha para
-// que el logo, el título y el tagline, que arrancan a la izquierda, queden
-// sobre el azul: ahí el texto blanco tiene más contraste que sobre el violeta.
+// Degradado azul → violeta, como en la web, de izquierda a derecha. Termina en
+// el violeta oscuro y no en el primario: el texto va en blanco y, con el
+// violeta primario, el subtítulo quedaba apenas bajo el contraste mínimo
+// (4.5) en el extremo derecho. Así supera 5 en todo el ancho.
 const Contenedor = styled(LinearGradient).attrs({
-  colors: [theme.colores.azulPrimario, theme.colores.violetaPrimario],
+  colors: [theme.colores.azulPrimario, theme.colores.violetaOscuro],
   start: { x: 0, y: 0 },
   end: { x: 1, y: 0 },
 })`

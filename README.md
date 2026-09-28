@@ -192,13 +192,13 @@ para datos que más adelante lleguen de una API, sin modificarlo.
 | `FlatList` | [profesionales.tsx](app/(app)/profesionales.tsx) — listado con `keyExtractor`, `ListHeaderComponent` (botón de volver, Header, buscador, chips de especialidad y título de sección) y `ListEmptyComponent` (carga, error, sin resultados) |
 | `TouchableOpacity` | [ProfesionalCard.tsx](components/ProfesionalCard.tsx) (toda la card es tocable) y botón de volver en el detalle |
 | Expo Router — `Stack` | [_layout.tsx](app/_layout.tsx) — da la transición nativa y el gesto de volver |
-| Ruta dinámica | [profesional/[id].tsx](app/(app)/profesional/[id].tsx) — lee el id con `useLocalSearchParams` y busca el profesional en `data/` |
+| Ruta dinámica | [profesional/[id].tsx](app/(app)/profesional/[id].tsx) — lee el id con `useLocalSearchParams` y pide el profesional al servicio con `useQuery` (`['profesional', id]`). Si viene del listado, arranca con el dato que ya está en caché |
 | `useRouter` | `router.push` al detalle desde el listado; `router.back()` para volver |
 | Flexbox | `flex-direction`, `align-items`, `justify-content` y `align-self` en las cards y el detalle |
 | `TextInput` | [BuscadorProfesionales.tsx](components/BuscadorProfesionales.tsx) — `value` + `onChangeText` sincronizados con el store |
 | `ScrollView` horizontal | [FiltroEspecialidades.tsx](components/FiltroEspecialidades.tsx) — fila de chips con `horizontal` y sin indicador de scroll |
 | `@expo/vector-icons` | `Ionicons` en 8 archivos: [menu.tsx](app/(app)/menu.tsx) (cerrar sesión) y [MenuOpcion.tsx](components/MenuOpcion.tsx) (ícono de cada opción y flecha); [index.tsx](app/index.tsx) (mostrar u ocultar la contraseña); [recuperar-clave.tsx](app/recuperar-clave.tsx) (confirmación de envío); [BuscadorProfesionales.tsx](components/BuscadorProfesionales.tsx) (lupa y borrar); [Calendario.tsx](components/Calendario.tsx) (flechas de mes); [ProfesionalOpcion.tsx](components/ProfesionalOpcion.tsx) (profesional elegido); [solicitar-turno.tsx](app/(app)/solicitar-turno.tsx) (turno confirmado) |
-| `LinearGradient` | [Header.tsx](components/Header.tsx) — degradado azul → violeta con los colores del theme (`azulPrimario` y `violetaPrimario`). Lo usan el menú, el listado y solicitar turno |
+| `LinearGradient` | [Header.tsx](components/Header.tsx) — degradado azul → violeta con los colores del theme (`azulPrimario` y `violetaOscuro`), con texto en blanco. Lo usan el menú, el listado y solicitar turno |
 | `ActivityIndicator` | carga del listado en [profesionales.tsx](app/(app)/profesionales.tsx) y de los chips de especialidad |
 | TanStack Query — `useQuery` | `['profesionales', especialidad]` en [profesionales.tsx](app/(app)/profesionales.tsx) y `['especialidades']` en los chips. `QueryClientProvider` en [_layout.tsx](app/_layout.tsx) |
 | Zustand — `create()` / `set()` | [store/useFiltrosStore.ts](store/useFiltrosStore.ts) — texto de búsqueda y especialidad elegida; [store/useSesionStore.ts](store/useSesionStore.ts) — usuario logueado |

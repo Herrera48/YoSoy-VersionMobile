@@ -74,10 +74,10 @@ const TextoAccion = styled.Text`
   color: ${theme.colores.azulPrimario};
 `;
 
-// Definido fuera de Home para que la FlatList reciba siempre el mismo
-// componente: si se declarara adentro, cada letra tipeada lo recrearía, el
-// TextInput se desmontaría y el teclado se cerraría. Lee los filtros del store
-// de Zustand por su cuenta, así que no necesita props.
+// Definido fuera de Profesionales para que la FlatList reciba siempre el
+// mismo componente: si se declarara adentro, cada letra tipeada lo recrearía,
+// el TextInput se desmontaría y el teclado se cerraría. Lee los filtros del
+// store de Zustand por su cuenta, así que no necesita props.
 function EncabezadoLista() {
   const router = useRouter();
   const busqueda = useFiltrosStore((state) => state.busqueda);
@@ -118,7 +118,7 @@ function EncabezadoLista() {
   );
 }
 
-export default function Home() {
+export default function Profesionales() {
   const router = useRouter();
   const busqueda = useFiltrosStore((state) => state.busqueda);
   const especialidad = useFiltrosStore((state) => state.especialidad);
