@@ -87,6 +87,12 @@ const TextoCambiar = styled.Text`
   color: ${theme.colores.azulPrimario};
 `;
 
+const BotonVerTurnos = styled.TouchableOpacity`
+  align-self: center;
+  padding-vertical: ${theme.espaciado.sm}px;
+  margin-top: ${theme.espaciado.md}px;
+`;
+
 const Indicacion = styled.Text`
   font-size: ${theme.fuentes.md}px;
   line-height: ${theme.interlineado.md}px;
@@ -197,6 +203,14 @@ export default function SolicitarTurno() {
           {/* Vuelve a la pantalla desde la que se pidió el turno (el menú o
               el detalle del profesional). */}
           <BotonPrimario texto="Listo" onPress={volver} />
+          {/* replace: desde "Mis turnos", volver no regresa a esta
+              confirmación sino a la pantalla anterior. */}
+          <BotonVerTurnos
+            onPress={() => router.replace('/mis-turnos')}
+            accessibilityRole="button"
+          >
+            <TextoCambiar>Ver mis turnos</TextoCambiar>
+          </BotonVerTurnos>
         </Tarjeta>
       </Pantalla>
     );

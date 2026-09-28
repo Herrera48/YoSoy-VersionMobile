@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import { ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
@@ -121,6 +121,7 @@ export default function AgendaTurnos({
   onTurnoReservado,
 }: AgendaTurnosProps) {
   const usuario = useSesionStore((state) => state.usuario);
+  const queryClient = useQueryClient();
 
   const [diaElegido, setDiaElegido] = useState<string | null>(null);
   const [mesElegido, setMesElegido] = useState<Date | null>(null);
@@ -216,6 +217,9 @@ export default function AgendaTurnos({
     setReservando(true);
     try {
       await reservarTurno(turnoElegido.id, usuario);
+      // "Mis turnos" ya no está al día: la próxima vez que se abra, TanStack
+      // vuelve a pedirlos en lugar de mostrar el caché viejo.
+      queryClient.invalidateQueries({ queryKey: ['mis-turnos'] });
       onTurnoReservado(turnoElegido);
     } catch (e) {
       setErrorReserva(

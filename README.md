@@ -48,7 +48,7 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 | 1 | Consultar profesionales disponibles | En desarrollo — listado con FlatList y pantalla de detalle |
 | 2 | Buscar y filtrar profesionales por especialidad | En desarrollo — buscador por texto y chips de especialidad |
 | 3 | Solicitar un turno | En desarrollo — calendario y agenda por hora, por especialidad o por profesional (reservas simuladas) |
-| 4 | Consultar mis turnos | Pendiente — ya figura en el menú como "Próximamente" |
+| 4 | Consultar mis turnos | En desarrollo — listado de los turnos reservados, del más cercano al más lejano (reservas simuladas) |
 | 5 | Cancelar un turno | Pendiente — ya figura en el menú como "Próximamente" |
 | 6 | Registrar mi estado de ánimo diario | Pendiente |
 
@@ -57,8 +57,9 @@ para mostrarla) y el enlace "Olvidé mi contraseña", que lleva a la pantalla
 de **recupero por correo**. Por ahora cualquier usuario y contraseña son
 válidos; la validación real se hará contra la API. Una vez adentro se ve el
 **menú** con las cuatro opciones del paciente: la de especialidades y
-profesionales lleva al listado de la Feature 2 y la de solicitar turno a la Feature 3; las
-de mis turnos y cancelar turno todavía están deshabilitadas.
+profesionales lleva al listado de la Feature 2, la de solicitar turno a la
+Feature 3 y la de mis turnos a la Feature 4; la de cancelar turno todavía está
+deshabilitada.
 
 La Feature 1 muestra el listado de profesionales con `FlatList` y, al tocar
 una card, navega a una pantalla de detalle con todos sus datos.
@@ -76,6 +77,17 @@ y ocupados de cada profesional. También se llega desde el detalle de un
 profesional con el botón "Solicitar turno". Los turnos se arman a partir de
 la agenda semanal de cada profesional ([data/agendas.ts](data/agendas.ts)) y
 las reservas se guardan en memoria ([services/turnos.ts](services/turnos.ts)).
+
+La Feature 4 lista, en una `FlatList`, los turnos que reservó el paciente y
+que todavía no pasaron, ordenados del más cercano al más lejano. Cada turno se
+muestra en una [TurnoCard](components/TurnoCard.tsx) con la fecha, la hora, el
+profesional y los badges de especialidad y modalidad; los de hoy llevan un
+badge "Hoy". Se actualiza deslizando hacia abajo (`RefreshControl`) y, si no
+hay turnos, ofrece ir a solicitar uno. Al confirmar un turno en la Feature 3,
+`AgendaTurnos` invalida la consulta `['mis-turnos']`, así que la lista nunca
+muestra datos viejos; la confirmación también tiene un enlace "Ver mis
+turnos". Como las reservas viven en memoria, al recargar la app la lista
+arranca vacía.
 
 Los datos siguen siendo estáticos (`data/`), pero ya se consumen a través de
 una capa de servicios asíncrona ([services/profesionales.ts](services/profesionales.ts))
@@ -140,7 +152,9 @@ app/
     ├── _layout.tsx        Redirige al login si no hay sesión
     ├── menu.tsx           /menu               Menú principal
     ├── profesionales.tsx  /profesionales      Listado con búsqueda y filtros
-    └── profesional/[id].tsx  /profesional/:id Detalle del profesional
+    ├── profesional/[id].tsx  /profesional/:id Detalle del profesional
+    ├── solicitar-turno.tsx   /solicitar-turno Solicitar un turno
+    └── mis-turnos.tsx     /mis-turnos         Turnos reservados del paciente
 ```
 
 - **Login → menú con `router.replace`**: una vez adentro, "volver" no
