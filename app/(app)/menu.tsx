@@ -39,7 +39,7 @@ const OPCIONES: Opcion[] = [
     titulo: 'Mis turnos',
     descripcion: 'Consultá los turnos que tenés agendados.',
     icono: 'time-outline',
-    ruta: null,
+    ruta: '/mis-turnos',
   },
   {
     id: 'cancelar-turno',

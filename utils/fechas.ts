@@ -10,7 +10,7 @@ export const NOMBRES_MESES = [
   'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre',
 ];
 
-const NOMBRES_DIAS = [
+export const NOMBRES_DIAS = [
   'domingo', 'lunes', 'martes', 'miércoles', 'jueves', 'viernes', 'sábado',
 ];
 

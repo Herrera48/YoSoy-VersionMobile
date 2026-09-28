@@ -50,7 +50,7 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 | 1 | Consultar profesionales disponibles | En desarrollo — listado con FlatList y pantalla de detalle |
 | 2 | Buscar y filtrar profesionales por especialidad | En desarrollo — buscador por texto y chips de especialidad |
 | 3 | Solicitar un turno | En desarrollo — calendario y agenda por hora, por especialidad o por profesional (reservas simuladas) |
-| 4 | Consultar mis turnos | Pendiente — ya figura en el menú como "Próximamente" |
+| 4 | Consultar mis turnos | En desarrollo — listado de los turnos reservados, del más cercano al más lejano (reservas simuladas) |
 | 5 | Cancelar un turno | Pendiente — ya figura en el menú como "Próximamente" |
 | 6 | Registrar mi estado de ánimo diario | Pendiente |
 
@@ -59,8 +59,9 @@ para mostrarla) y el enlace "Olvidé mi contraseña", que lleva a la pantalla
 de **recupero por correo**. Por ahora cualquier usuario y contraseña son
 válidos; la validación real se hará contra la API. Una vez adentro se ve el
 **menú** con las cuatro opciones del paciente: la de especialidades y
-profesionales lleva al listado de la Feature 2 y la de solicitar turno a la Feature 3; las
-de mis turnos y cancelar turno todavía están deshabilitadas.
+profesionales lleva al listado de la Feature 2, la de solicitar turno a la
+Feature 3 y la de mis turnos a la Feature 4; la de cancelar turno todavía está
+deshabilitada.
 
 La Feature 1 muestra el listado de profesionales con `FlatList` y, al tocar
 una card, navega a una pantalla de detalle con todos sus datos.
@@ -78,6 +79,17 @@ y ocupados de cada profesional. También se llega desde el detalle de un
 profesional con el botón "Solicitar turno". Los turnos se arman a partir de
 la agenda semanal de cada profesional ([data/agendas.ts](data/agendas.ts)) y
 las reservas se guardan en memoria ([services/turnos.ts](services/turnos.ts)).
+
+La Feature 4 lista, en una `FlatList`, los turnos que reservó el paciente y
+que todavía no pasaron, ordenados del más cercano al más lejano. Cada turno se
+muestra en una [TurnoCard](components/TurnoCard.tsx) con la fecha, la hora, el
+profesional y los badges de especialidad y modalidad; los de hoy llevan un
+badge "Hoy". Se actualiza deslizando hacia abajo (`RefreshControl`) y, si no
+hay turnos, ofrece ir a solicitar uno. Al confirmar un turno en la Feature 3,
+`AgendaTurnos` invalida la consulta `['mis-turnos']`, así que la lista nunca
+muestra datos viejos; la confirmación también tiene un enlace "Ver mis
+turnos". Como las reservas viven en memoria, al recargar la app la lista
+arranca vacía.
 
 Los datos siguen siendo estáticos (`data/`), pero ya se consumen a través de
 una capa de servicios asíncrona ([services/profesionales.ts](services/profesionales.ts))
@@ -143,7 +155,8 @@ app/
     ├── menu.tsx           /menu               Menú principal
     ├── profesionales.tsx  /profesionales      Listado con búsqueda y filtros
     ├── profesional/[id].tsx  /profesional/:id Detalle del profesional
-    └── solicitar-turno.tsx  /solicitar-turno  Calendario y agenda por hora
+    ├── solicitar-turno.tsx  /solicitar-turno  Calendario y agenda por hora
+    └── mis-turnos.tsx     /mis-turnos         Turnos reservados del paciente
 ```
 
 - **Login → menú con `router.replace`**: una vez adentro, "volver" no
@@ -168,13 +181,13 @@ app/
 
 | Contenido | Dónde |
 |-----------|-------|
-| `View` | `styled.View` en los 13 componentes de [components/](components/) y en las 6 pantallas |
-| `Text` | `styled.Text` en los 13 componentes y en las 6 pantallas |
+| `View` | `styled.View` en los 14 componentes de [components/](components/) y en las 7 pantallas |
+| `Text` | `styled.Text` en los 14 componentes y en las 7 pantallas |
 | `Image` | avatar del profesional en [ProfesionalCard.tsx](components/ProfesionalCard.tsx), [ProfesionalOpcion.tsx](components/ProfesionalOpcion.tsx) y el detalle; logo en [Header.tsx](components/Header.tsx) y en el login |
 | `ScrollView` | envuelve el login, el recupero, el menú, el detalle y solicitar turno; en [FiltroEspecialidades.tsx](components/FiltroEspecialidades.tsx), horizontal para los chips. En el listado lo reemplazó `FlatList` (ver Unidad II) |
 | Datos estáticos | [data/profesionales.ts](data/profesionales.ts) (8 profesionales) y [data/especialidades.ts](data/especialidades.ts) |
-| Componentes reutilizables | [components/](components/) — 13 componentes: `AgendaTurnos`, `Badge`, `BotonPrimario`, `BuscadorProfesionales`, `Calendario`, `CampoTexto`, `Chip`, `FiltroEspecialidades`, `GrillaHorarios`, `Header`, `MenuOpcion`, `ProfesionalCard` y `ProfesionalOpcion` |
-| Props | interfaces de props explícitas en TypeScript en los 13 componentes; tipos de dominio en [types/index.ts](types/index.ts) |
+| Componentes reutilizables | [components/](components/) — 14 componentes: `AgendaTurnos`, `Badge`, `BotonPrimario`, `BuscadorProfesionales`, `Calendario`, `CampoTexto`, `Chip`, `FiltroEspecialidades`, `GrillaHorarios`, `Header`, `MenuOpcion`, `ProfesionalCard`, `ProfesionalOpcion` y `TurnoCard` |
+| Props | interfaces de props explícitas en TypeScript en los 14 componentes; tipos de dominio en [types/index.ts](types/index.ts) |
 | Styled Components | `styled-components/native` en todos los componentes y pantallas, con los valores de diseño centralizados en [constants/theme.ts](constants/theme.ts). No hay estilos inline ni colores sueltos |
 
 **`ProfesionalCard` es un componente presentacional puro.** Recibe todos sus
@@ -189,7 +202,7 @@ para datos que más adelante lleguen de una API, sin modificarlo.
 
 | Contenido | Dónde |
 |-----------|-------|
-| `FlatList` | [profesionales.tsx](app/(app)/profesionales.tsx) — listado con `keyExtractor`, `ListHeaderComponent` (botón de volver, Header, buscador, chips de especialidad y título de sección) y `ListEmptyComponent` (carga, error, sin resultados) |
+| `FlatList` | [profesionales.tsx](app/(app)/profesionales.tsx) — listado con `keyExtractor`, `ListHeaderComponent` (botón de volver, Header, buscador, chips de especialidad y título de sección) y `ListEmptyComponent` (carga, error, sin resultados). También en [mis-turnos.tsx](app/(app)/mis-turnos.tsx), con `RefreshControl` para actualizar deslizando hacia abajo |
 | `TouchableOpacity` | [ProfesionalCard.tsx](components/ProfesionalCard.tsx) (toda la card es tocable) y botón de volver en el detalle |
 | Expo Router — `Stack` | [_layout.tsx](app/_layout.tsx) — da la transición nativa y el gesto de volver |
 | Ruta dinámica | [profesional/[id].tsx](app/(app)/profesional/[id].tsx) — lee el id con `useLocalSearchParams` y pide el profesional al servicio con `useQuery` (`['profesional', id]`). Si viene del listado, arranca con el dato que ya está en caché |
@@ -197,8 +210,8 @@ para datos que más adelante lleguen de una API, sin modificarlo.
 | Flexbox | `flex-direction`, `align-items`, `justify-content` y `align-self` en las cards y el detalle |
 | `TextInput` | [BuscadorProfesionales.tsx](components/BuscadorProfesionales.tsx) — `value` + `onChangeText` sincronizados con el store |
 | `ScrollView` horizontal | [FiltroEspecialidades.tsx](components/FiltroEspecialidades.tsx) — fila de chips con `horizontal` y sin indicador de scroll |
-| `@expo/vector-icons` | `Ionicons` en 8 archivos: [menu.tsx](app/(app)/menu.tsx) (cerrar sesión) y [MenuOpcion.tsx](components/MenuOpcion.tsx) (ícono de cada opción y flecha); [index.tsx](app/index.tsx) (mostrar u ocultar la contraseña); [recuperar-clave.tsx](app/recuperar-clave.tsx) (confirmación de envío); [BuscadorProfesionales.tsx](components/BuscadorProfesionales.tsx) (lupa y borrar); [Calendario.tsx](components/Calendario.tsx) (flechas de mes); [ProfesionalOpcion.tsx](components/ProfesionalOpcion.tsx) (profesional elegido); [solicitar-turno.tsx](app/(app)/solicitar-turno.tsx) (turno confirmado) |
-| `LinearGradient` | [Header.tsx](components/Header.tsx) — degradado azul → violeta con los colores del theme (`azulPrimario` y `violetaOscuro`), con texto en blanco. Lo usan el menú, el listado y solicitar turno |
+| `@expo/vector-icons` | `Ionicons` en 9 archivos: [menu.tsx](app/(app)/menu.tsx) (cerrar sesión) y [MenuOpcion.tsx](components/MenuOpcion.tsx) (ícono de cada opción y flecha); [index.tsx](app/index.tsx) (mostrar u ocultar la contraseña); [recuperar-clave.tsx](app/recuperar-clave.tsx) (confirmación de envío); [BuscadorProfesionales.tsx](components/BuscadorProfesionales.tsx) (lupa y borrar); [Calendario.tsx](components/Calendario.tsx) (flechas de mes); [ProfesionalOpcion.tsx](components/ProfesionalOpcion.tsx) (profesional elegido); [solicitar-turno.tsx](app/(app)/solicitar-turno.tsx) (turno confirmado); [TurnoCard.tsx](components/TurnoCard.tsx) (reloj de la hora) |
+| `LinearGradient` | [Header.tsx](components/Header.tsx) — degradado azul → violeta con los colores del theme (`azulPrimario` y `violetaOscuro`), con texto en blanco. Lo usan el menú, el listado, solicitar turno y mis turnos |
 | `ActivityIndicator` | carga del listado en [profesionales.tsx](app/(app)/profesionales.tsx) y de los chips de especialidad |
 | TanStack Query — `useQuery` | `['profesionales', especialidad]` en [profesionales.tsx](app/(app)/profesionales.tsx) y `['especialidades']` en los chips. `QueryClientProvider` en [_layout.tsx](app/_layout.tsx) |
 | Zustand — `create()` / `set()` | [store/useFiltrosStore.ts](store/useFiltrosStore.ts) — texto de búsqueda y especialidad elegida; [store/useSesionStore.ts](store/useSesionStore.ts) — usuario logueado |
