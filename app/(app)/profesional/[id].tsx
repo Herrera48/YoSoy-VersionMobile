@@ -1,9 +1,9 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import styled from 'styled-components/native';
 
-import Badge from '../../components/Badge';
-import { theme } from '../../constants/theme';
-import { profesionales } from '../../data/profesionales';
+import Badge from '../../../components/Badge';
+import { theme } from '../../../constants/theme';
+import { profesionales } from '../../../data/profesionales';
 
 const Pantalla = styled.ScrollView.attrs({
   contentContainerStyle: {
@@ -114,7 +114,7 @@ export default function DetalleProfesional() {
     if (router.canGoBack()) {
       router.back();
     } else {
-      router.replace('/');
+      router.replace('/profesionales');
     }
   };
 
