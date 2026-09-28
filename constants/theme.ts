@@ -4,7 +4,8 @@
 //
 // Se consume importando el objeto directamente en cada componente
 // (`import { theme } from '../constants/theme'`). No usa ThemeProvider de
-// styled-components a propósito: eso es contenido de la Unidad II.
+// styled-components: no está entre los contenidos habilitados, y con un solo
+// tema importar el objeto alcanza.
 
 export const theme = {
   colores: {
@@ -23,7 +24,8 @@ export const theme = {
     // Mensajes de validación en formularios.
     error: '#DC2626',
 
-    // Texto sobre fondos de marca (chip de especialidad seleccionado).
+    // Texto sobre fondos de marca: degradado del Header, botón primario,
+    // chip, día y horario seleccionados.
     textoSobrePrimario: '#FFFFFF',
 
     // ── Bordes y sombra ────────────────────────────────────────────────
@@ -35,6 +37,9 @@ export const theme = {
     // para que las dos variantes se lean como pareja y no como dos grises.
     fondoBadgeEspecialidad: '#DBEAFE',
     fondoBadgeModalidad: '#EDE9FE',
+
+    // Sin fondo (días del calendario que no tienen turnos).
+    transparente: 'transparent',
   },
 
   // Escala de espaciado en px. Se usa como `${theme.espaciado.md}px`.
@@ -47,7 +52,7 @@ export const theme = {
     xxl: 24,
     xxxl: 32,
     // Aire superior de cada pantalla para no quedar debajo de la barra de
-    // estado. Lo comparten el listado y el detalle.
+    // estado. Lo usan todas las pantallas.
     superiorPantalla: 56,
   },
 

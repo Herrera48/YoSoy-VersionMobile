@@ -1,13 +1,10 @@
+import { Sesion } from '../types';
 import { esperar } from './simulacion';
 
 // Autenticación SIMULADA: por ahora cualquier usuario y contraseña son
 // válidos. Cuando exista la API, estas funciones pasan a hacer el fetch real
 // (y a lanzar un error si las credenciales son incorrectas); las pantallas ya
 // manejan ese caso con try/catch, así que no hay que tocarlas.
-
-export interface Sesion {
-  usuario: string;
-}
 
 export async function iniciarSesion(
   usuario: string,

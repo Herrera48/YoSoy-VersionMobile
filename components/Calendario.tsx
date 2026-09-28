@@ -38,7 +38,7 @@ const COLORES_DIA: Record<EstadoDia, { fondo: string; texto: string }> = {
     texto: theme.colores.azulPrimario,
   },
   sinTurnos: {
-    fondo: 'transparent',
+    fondo: theme.colores.transparente,
     texto: theme.colores.textoSecundario,
   },
 };

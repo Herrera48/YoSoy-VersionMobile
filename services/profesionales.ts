@@ -21,6 +21,13 @@ export async function obtenerProfesionales(
   return profesionales.filter((p) => p.especialidad === especialidad);
 }
 
+// Como lo haría un GET /profesionales/:id. Devuelve null si no existe, para
+// que la pantalla muestre "no encontrado" en lugar de un error.
+export async function obtenerProfesional(id: string): Promise<Profesional | null> {
+  await esperar();
+  return profesionales.find((p) => p.id === id) ?? null;
+}
+
 export async function obtenerEspecialidades(): Promise<Especialidad[]> {
   await esperar();
   return especialidades;

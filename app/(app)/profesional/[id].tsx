@@ -1,10 +1,13 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
 
 import Badge from '../../../components/Badge';
 import BotonPrimario from '../../../components/BotonPrimario';
 import { theme } from '../../../constants/theme';
-import { profesionales } from '../../../data/profesionales';
+import { obtenerProfesional } from '../../../services/profesionales';
+import { Profesional } from '../../../types';
 
 const Pantalla = styled.ScrollView.attrs({
   contentContainerStyle: {
@@ -100,18 +103,46 @@ const AccionTurno = styled.View`
   margin-top: ${theme.espaciado.xl}px;
 `;
 
-const MensajeNoEncontrado = styled.Text`
+const EstadoCarga = styled.View`
+  align-items: center;
+  margin-top: ${theme.espaciado.xxxl}px;
+`;
+
+const MensajeEstado = styled.Text`
   font-size: ${theme.fuentes.md}px;
   line-height: ${theme.interlineado.md}px;
   color: ${theme.colores.textoSecundario};
   text-align: center;
-  margin-top: ${theme.espaciado.xxxl}px;
+`;
+
+const BotonReintentar = styled.TouchableOpacity`
+  padding-vertical: ${theme.espaciado.sm}px;
+  margin-top: ${theme.espaciado.md}px;
+`;
+
+const TextoReintentar = styled.Text`
+  font-size: ${theme.fuentes.md}px;
+  font-weight: ${theme.pesos.semi};
+  color: ${theme.colores.azulPrimario};
 `;
 
 export default function DetalleProfesional() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const profesional = profesionales.find((p) => p.id === id);
+  const queryClient = useQueryClient();
+
+  // Si se llega desde el listado, el profesional ya está en el caché de
+  // ['profesionales', ...]: se usa como dato inicial y la ficha aparece sin
+  // spinner. Por deep link no hay caché y se espera al servicio.
+  const { data: profesional, isLoading, error, refetch } = useQuery({
+    queryKey: ['profesional', id],
+    queryFn: () => obtenerProfesional(id),
+    initialData: () =>
+      queryClient
+        .getQueriesData<Profesional[]>({ queryKey: ['profesionales'] })
+        .flatMap(([, lista]) => lista ?? [])
+        .find((p) => p.id === id),
+  });
 
   // Si se entra directo por un deep link (yosoymobile://profesional/3) no hay
   // pantalla anterior en el historial, y router.back() no tendría a dónde ir.
@@ -133,7 +164,18 @@ export default function DetalleProfesional() {
         <TextoVolver>← Volver</TextoVolver>
       </BotonVolver>
 
-      {profesional ? (
+      {isLoading ? (
+        <EstadoCarga>
+          <ActivityIndicator size="large" color={theme.colores.azulPrimario} />
+        </EstadoCarga>
+      ) : error ? (
+        <EstadoCarga>
+          <MensajeEstado>No pudimos cargar al profesional.</MensajeEstado>
+          <BotonReintentar onPress={() => refetch()} accessibilityRole="button">
+            <TextoReintentar>Reintentar</TextoReintentar>
+          </BotonReintentar>
+        </EstadoCarga>
+      ) : profesional ? (
         <Tarjeta>
           <Perfil>
             <Avatar source={{ uri: profesional.avatar }} />
@@ -168,9 +210,9 @@ export default function DetalleProfesional() {
           </AccionTurno>
         </Tarjeta>
       ) : (
-        <MensajeNoEncontrado>
-          No encontramos a este profesional.
-        </MensajeNoEncontrado>
+        <EstadoCarga>
+          <MensajeEstado>No encontramos a este profesional.</MensajeEstado>
+        </EstadoCarga>
       )}
     </Pantalla>
   );

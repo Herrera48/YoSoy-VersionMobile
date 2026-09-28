@@ -1,3 +1,4 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import styled from 'styled-components/native';
 
 import logoYoSoy from '../assets/images/logo-yosoy.png';
@@ -13,11 +14,18 @@ interface HeaderProps {
   tagline?: string;
 }
 
-const Contenedor = styled.View`
-  background-color: ${theme.colores.fondo};
-  padding-bottom: ${theme.espaciado.xl}px;
-  border-bottom-width: 1px;
-  border-bottom-color: ${theme.colores.borde};
+// Degradado azul → violeta, como en la web, de izquierda a derecha. Termina en
+// el violeta oscuro y no en el primario: el texto va en blanco y, con el
+// violeta primario, el subtítulo quedaba apenas bajo el contraste mínimo
+// (4.5) en el extremo derecho. Así supera 5 en todo el ancho.
+const Contenedor = styled(LinearGradient).attrs({
+  colors: [theme.colores.azulPrimario, theme.colores.violetaOscuro],
+  start: { x: 0, y: 0 },
+  end: { x: 1, y: 0 },
+})`
+  border-radius: ${theme.radios.lg}px;
+  overflow: hidden;
+  padding: ${theme.espaciado.xl}px;
   margin-bottom: ${theme.espaciado.xxl}px;
 `;
 
@@ -27,38 +35,48 @@ const Marca = styled.View`
   align-items: center;
 `;
 
+// El logo es azul (#235DA7, el de la marca web) y sobre el degradado se
+// perdería. En lugar de recolorearlo, se apoya sobre un círculo blanco.
+const FondoLogo = styled.View`
+  width: 64px;
+  height: 64px;
+  border-radius: 32px;
+  background-color: ${theme.colores.card};
+  align-items: center;
+  justify-content: center;
+  margin-right: ${theme.espaciado.md}px;
+`;
+
 // 60px compensa el padding transparente del lienzo: el dibujo ocupa 327x301
-// de un PNG de 500x500, así que el cerebro queda en ~46px efectivos y se
-// equilibra con la tipografía del título.
+// de un PNG de 500x500.
 const Logo = styled.Image`
   width: 60px;
   height: 60px;
-  margin-right: ${theme.espaciado.md}px;
   resize-mode: contain;
 `;
 
 const Titulo = styled.Text`
   font-size: ${theme.fuentes.xxl}px;
   font-weight: ${theme.pesos.bold};
-  color: ${theme.colores.azulPrimario};
+  color: ${theme.colores.textoSobrePrimario};
 `;
 
-// El elemento más característico de la marca: mayúsculas, violeta oscuro y
-// mucho aire entre letras.
+// El elemento más característico de la marca: mayúsculas y mucho aire entre
+// letras.
 const Tagline = styled.Text`
   font-size: ${theme.fuentes.xs}px;
   font-weight: ${theme.pesos.bold};
   letter-spacing: ${theme.espaciadoLetra.amplio}px;
-  color: ${theme.colores.violetaOscuro};
-  margin-top: ${theme.espaciado.sm}px;
+  color: ${theme.colores.textoSobrePrimario};
+  margin-top: ${theme.espaciado.md}px;
 `;
 
-// Tercer nivel de jerarquía: no compite con el tagline.
+// Tercer nivel de jerarquía: se diferencia del tagline por tamaño y peso.
 const Subtitulo = styled.Text`
   font-size: ${theme.fuentes.sm}px;
   line-height: ${theme.interlineado.sm}px;
-  color: ${theme.colores.textoSecundario};
-  margin-top: ${theme.espaciado.md}px;
+  color: ${theme.colores.textoSobrePrimario};
+  margin-top: ${theme.espaciado.sm}px;
 `;
 
 export default function Header({
@@ -69,7 +87,9 @@ export default function Header({
   return (
     <Contenedor>
       <Marca>
-        <Logo source={logoYoSoy} />
+        <FondoLogo>
+          <Logo source={logoYoSoy} />
+        </FondoLogo>
         <Titulo>{titulo}</Titulo>
       </Marca>
 

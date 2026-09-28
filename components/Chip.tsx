@@ -3,8 +3,7 @@ import styled from 'styled-components/native';
 import { theme } from '../constants/theme';
 
 // Opción seleccionable en forma de píldora. La usan los filtros de
-// especialidad y los horarios del turno: cuando está activa se pinta con el
-// azul de la marca.
+// especialidad: cuando está activa se pinta con el azul de la marca.
 interface ChipProps {
   texto: string;
   activo: boolean;
