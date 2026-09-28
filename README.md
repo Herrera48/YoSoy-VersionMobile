@@ -36,22 +36,32 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 - Expo Router (ruteo por archivos)
 - TypeScript
 - Styled Components (`styled-components/native`)
+- TanStack Query (`@tanstack/react-query`) — pedidos de datos y caché
+- Zustand — estado global de los filtros
+- `@expo/vector-icons` — íconos
 
 ## Features
 
 | # | Feature | Estado |
 |---|---------|--------|
 | 1 | Consultar profesionales disponibles | En desarrollo — listado con FlatList y pantalla de detalle |
-| 2 | Buscar y filtrar profesionales por especialidad | Pendiente |
+| 2 | Buscar y filtrar profesionales por especialidad | En desarrollo — buscador por texto y chips de especialidad |
 | 3 | Solicitar un turno | Pendiente |
 | 4 | Consultar mis turnos | Pendiente |
 | 5 | Cancelar un turno | Pendiente |
 | 6 | Registrar mi estado de ánimo diario | Pendiente |
 
 La Feature 1 muestra el listado de profesionales con `FlatList` y, al tocar
-una card, navega a una pantalla de detalle con todos sus datos. Los datos
-siguen siendo estáticos (`data/profesionales.ts`): todavía no hay búsqueda ni
-conexión a un backend. Ninguna feature está terminada.
+una card, navega a una pantalla de detalle con todos sus datos.
+
+La Feature 2 suma, arriba del listado, un buscador por nombre o especialidad
+(no distingue mayúsculas ni tildes) y una fila de chips para filtrar por
+especialidad. Si no hay coincidencias, se ofrece limpiar los filtros.
+
+Los datos siguen siendo estáticos (`data/`), pero ya se consumen a través de
+una capa de servicios asíncrona ([services/profesionales.ts](services/profesionales.ts))
+que simula la latencia de una API; todavía no hay backend. Ninguna feature
+está terminada.
 
 ## Cómo levantar el proyecto
 
@@ -120,8 +130,8 @@ datos por props y no importa nada de `data/`. Así el mismo componente sirve
 para el listado de hoy, para un resultado de búsqueda filtrada (Feature 2) y
 para datos que más adelante lleguen de una API, sin modificarlo.
 
-**`TextInput` todavía no se usa.** La pantalla actual es de solo lectura.
-Entra con la Feature 2 (búsqueda de profesionales).
+**`TextInput`** entra con la Feature 2: es el buscador de
+[BuscadorProfesionales.tsx](components/BuscadorProfesionales.tsx).
 
 ### Unidad II
 
@@ -146,8 +156,33 @@ Así la card sigue sin saber nada de rutas.
 al detalle por un deep link, no hay pantalla anterior; en ese caso vuelve al
 listado con `router.replace('/')` en lugar de `router.back()`.
 
+| `TextInput` | [BuscadorProfesionales.tsx](components/BuscadorProfesionales.tsx) — `value` + `onChangeText` sincronizados con el store |
+| `ScrollView` horizontal | [FiltroEspecialidades.tsx](components/FiltroEspecialidades.tsx) — fila de chips con `horizontal` y sin indicador de scroll |
+| `@expo/vector-icons` | `Ionicons` (lupa y botón de borrar) en el buscador |
+| `ActivityIndicator` | carga del listado en [index.tsx](app/index.tsx) y de los chips de especialidad |
+| TanStack Query — `useQuery` | `['profesionales', especialidad]` en [index.tsx](app/index.tsx) y `['especialidades']` en los chips. `QueryClientProvider` en [_layout.tsx](app/_layout.tsx) |
+| Zustand — `create()` / `set()` | [store/useFiltrosStore.ts](store/useFiltrosStore.ts) — texto de búsqueda y especialidad elegida |
+
+**La especialidad va en la `queryKey`, el texto no.** El filtro por
+especialidad lo resuelve el "servidor" (el servicio), como lo haría un
+`GET /profesionales?especialidad=...`: al cambiar la key TanStack vuelve a
+pedir, y cada especialidad queda cacheada por separado, así que volver a una
+ya consultada es instantáneo. La búsqueda por texto, en cambio, se filtra
+localmente sobre lo que ya llegó: no justifica una petición por cada tecla.
+
+**Zustand evita el prop drilling de los filtros.** El buscador y los chips
+viven dentro del `ListHeaderComponent` de la `FlatList`, y la pantalla es la
+que arma la consulta. Los tres leen el store directo, con suscripción
+selectiva (`useFiltrosStore((state) => state.busqueda)`), sin pasarse props.
+
+**El encabezado de la lista está definido fuera de la pantalla.** Si se
+declarara adentro, cada letra tipeada crearía un componente nuevo, la
+`FlatList` desmontaría el `TextInput` y el teclado se cerraría. Por el mismo
+motivo, el spinner y los errores se muestran en el `ListEmptyComponent` y no
+reemplazando a la lista.
+
 ### Pendiente de la Unidad II
 
-- **Zustand** y **`LinearGradient`**: en curso.
-- **TanStack Query** y **`ActivityIndicator`**: quedan para cuando la app se
-  conecte a un backend. Con datos locales no hay carga asíncrona que manejar.
+- **`LinearGradient`**: en curso.
+- **`useInfiniteQuery`**: con 8 profesionales no hay paginación que hacer;
+  entra cuando el listado venga de un backend.

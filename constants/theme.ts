@@ -20,6 +20,8 @@ export const theme = {
     // ── Texto ──────────────────────────────────────────────────────────
     textoPrincipal: '#1E1B4B',
     textoSecundario: '#6B7280',
+    // Texto sobre fondos de marca (chip de especialidad seleccionado).
+    textoSobrePrimario: '#FFFFFF',
 
     // ── Bordes y sombra ────────────────────────────────────────────────
     borde: '#E5E7EB',
@@ -76,6 +78,11 @@ export const theme = {
     regular: '400',
     semi: '600',
     bold: '700',
+  },
+
+  // Tamaños de ícono en px (@expo/vector-icons recibe un número, no un string).
+  iconos: {
+    md: 20,
   },
 
   // Separación entre letras, en px. El tagline de la marca usa la amplia.
