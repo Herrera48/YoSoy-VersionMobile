@@ -32,7 +32,7 @@ const OPCIONES: Opcion[] = [
     titulo: 'Solicitar turno',
     descripcion: 'Elegí especialidad o profesional y reservá un horario.',
     icono: 'calendar-outline',
-    ruta: null,
+    ruta: '/solicitar-turno',
   },
   {
     id: 'mis-turnos',

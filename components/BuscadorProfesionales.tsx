@@ -2,12 +2,14 @@ import { Ionicons } from '@expo/vector-icons';
 import styled from 'styled-components/native';
 
 import { theme } from '../constants/theme';
-import { useFiltrosStore } from '../store/useFiltrosStore';
 
-// A diferencia de ProfesionalCard, este componente no es presentacional: lee
-// y escribe el texto de búsqueda en el store de Zustand. Por eso no recibe
-// props y la pantalla puede usarlo como encabezado de la FlatList sin tener
-// que pasarle nada.
+// Campo de búsqueda de profesionales. Recibe el texto y avisa cada cambio por
+// onCambiar: lo usan el listado (con el store de filtros) y solicitar turno
+// (con su propio estado).
+interface BuscadorProfesionalesProps {
+  valor: string;
+  onCambiar: (texto: string) => void;
+}
 
 const Contenedor = styled.View`
   flex-direction: row;
@@ -32,12 +34,10 @@ const BotonBorrar = styled.TouchableOpacity`
   padding: ${theme.espaciado.xs}px;
 `;
 
-export default function BuscadorProfesionales() {
-  // Suscripción selectiva: solo re-renderiza cuando cambia la búsqueda, no
-  // cuando se elige otra especialidad.
-  const busqueda = useFiltrosStore((state) => state.busqueda);
-  const setBusqueda = useFiltrosStore((state) => state.setBusqueda);
-
+export default function BuscadorProfesionales({
+  valor,
+  onCambiar,
+}: BuscadorProfesionalesProps) {
   return (
     <Contenedor>
       <Ionicons
@@ -46,17 +46,17 @@ export default function BuscadorProfesionales() {
         color={theme.colores.textoSecundario}
       />
       <Campo
-        value={busqueda}
-        onChangeText={setBusqueda}
+        value={valor}
+        onChangeText={onCambiar}
         placeholder="Buscar por nombre o especialidad"
         placeholderTextColor={theme.colores.textoSecundario}
         autoCorrect={false}
         returnKeyType="search"
         accessibilityLabel="Buscar profesionales"
       />
-      {busqueda !== '' && (
+      {valor !== '' && (
         <BotonBorrar
-          onPress={() => setBusqueda('')}
+          onPress={() => onCambiar('')}
           accessibilityRole="button"
           accessibilityLabel="Borrar búsqueda"
         >

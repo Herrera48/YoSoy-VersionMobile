@@ -12,6 +12,7 @@ import { theme } from '../../constants/theme';
 import { obtenerProfesionales } from '../../services/profesionales';
 import { useFiltrosStore } from '../../store/useFiltrosStore';
 import { Profesional } from '../../types';
+import { coincideConBusqueda } from '../../utils/busqueda';
 
 // FlatList reemplaza al ScrollView: ya scrollea por sí misma, y anidarla dentro
 // de un ScrollView anula el virtualizado (renderizaría todas las cards juntas).
@@ -73,31 +74,16 @@ const TextoAccion = styled.Text`
   color: ${theme.colores.azulPrimario};
 `;
 
-// Compara sin distinguir mayúsculas ni tildes: "martin" encuentra a "Martín".
-const normalizar = (texto: string) =>
-  texto
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .trim();
-
-function coincideConBusqueda(profesional: Profesional, busqueda: string) {
-  const termino = normalizar(busqueda);
-  if (termino === '') {
-    return true;
-  }
-  const texto = normalizar(
-    `${profesional.nombre} ${profesional.apellido} ${profesional.especialidad}`
-  );
-  return texto.includes(termino);
-}
-
 // Definido fuera de Home para que la FlatList reciba siempre el mismo
 // componente: si se declarara adentro, cada letra tipeada lo recrearía, el
-// TextInput se desmontaría y el teclado se cerraría. Buscador y chips leen el
-// store de Zustand por su cuenta, así que no necesita props.
+// TextInput se desmontaría y el teclado se cerraría. Lee los filtros del store
+// de Zustand por su cuenta, así que no necesita props.
 function EncabezadoLista() {
   const router = useRouter();
+  const busqueda = useFiltrosStore((state) => state.busqueda);
+  const especialidad = useFiltrosStore((state) => state.especialidad);
+  const setBusqueda = useFiltrosStore((state) => state.setBusqueda);
+  const setEspecialidad = useFiltrosStore((state) => state.setEspecialidad);
 
   // Sin historial (recarga en web o deep link) no hay a dónde volver con
   // back(): se va directo al menú.
@@ -122,8 +108,11 @@ function EncabezadoLista() {
         titulo="YoSoy"
         subtitulo="Acompañamiento en salud mental, cerca tuyo."
       />
-      <BuscadorProfesionales />
-      <FiltroEspecialidades />
+      <BuscadorProfesionales valor={busqueda} onCambiar={setBusqueda} />
+      <FiltroEspecialidades
+        especialidad={especialidad}
+        onCambiar={setEspecialidad}
+      />
       <TituloSeccion>PROFESIONALES DISPONIBLES</TituloSeccion>
     </>
   );

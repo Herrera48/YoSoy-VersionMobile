@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import styled from 'styled-components/native';
 
 import Badge from '../../../components/Badge';
+import BotonPrimario from '../../../components/BotonPrimario';
 import { theme } from '../../../constants/theme';
 import { profesionales } from '../../../data/profesionales';
 
@@ -95,6 +96,10 @@ const Descripcion = styled.Text`
   color: ${theme.colores.textoSecundario};
 `;
 
+const AccionTurno = styled.View`
+  margin-top: ${theme.espaciado.xl}px;
+`;
+
 const MensajeNoEncontrado = styled.Text`
   font-size: ${theme.fuentes.md}px;
   line-height: ${theme.interlineado.md}px;
@@ -148,6 +153,19 @@ export default function DetalleProfesional() {
 
           <TituloSeccion>SOBRE EL PROFESIONAL</TituloSeccion>
           <Descripcion>{profesional.descripcion}</Descripcion>
+
+          {/* La búsqueda de turno arranca ya filtrada por este profesional. */}
+          <AccionTurno>
+            <BotonPrimario
+              texto="Solicitar turno"
+              onPress={() =>
+                router.push({
+                  pathname: '/solicitar-turno',
+                  params: { profesionalId: profesional.id },
+                })
+              }
+            />
+          </AccionTurno>
         </Tarjeta>
       ) : (
         <MensajeNoEncontrado>

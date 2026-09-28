@@ -47,7 +47,7 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 | 0 | Inicio de sesión, recupero de contraseña y menú principal | En desarrollo — login simulado (acepta cualquier usuario) |
 | 1 | Consultar profesionales disponibles | En desarrollo — listado con FlatList y pantalla de detalle |
 | 2 | Buscar y filtrar profesionales por especialidad | En desarrollo — buscador por texto y chips de especialidad |
-| 3 | Solicitar un turno | Pendiente — ya figura en el menú como "Próximamente" |
+| 3 | Solicitar un turno | En desarrollo — calendario y agenda por hora, por especialidad o por profesional (reservas simuladas) |
 | 4 | Consultar mis turnos | Pendiente — ya figura en el menú como "Próximamente" |
 | 5 | Cancelar un turno | Pendiente — ya figura en el menú como "Próximamente" |
 | 6 | Registrar mi estado de ánimo diario | Pendiente |
@@ -57,8 +57,8 @@ para mostrarla) y el enlace "Olvidé mi contraseña", que lleva a la pantalla
 de **recupero por correo**. Por ahora cualquier usuario y contraseña son
 válidos; la validación real se hará contra la API. Una vez adentro se ve el
 **menú** con las cuatro opciones del paciente: la de especialidades y
-profesionales lleva al listado de la Feature 2, y las de turnos todavía están
-deshabilitadas.
+profesionales lleva al listado de la Feature 2 y la de solicitar turno a la Feature 3; las
+de mis turnos y cancelar turno todavía están deshabilitadas.
 
 La Feature 1 muestra el listado de profesionales con `FlatList` y, al tocar
 una card, navega a una pantalla de detalle con todos sus datos.
@@ -66,6 +66,16 @@ una card, navega a una pantalla de detalle con todos sus datos.
 La Feature 2 suma, arriba del listado, un buscador por nombre o especialidad
 (no distingue mayúsculas ni tildes) y una fila de chips para filtrar por
 especialidad. Si no hay coincidencias, se ofrece limpiar los filtros.
+
+La Feature 3 permite pedir un turno con la misma búsqueda del listado
+(texto y chips de especialidad). Con una especialidad elegida, un calendario
+marca los días con turnos libres de todos sus profesionales; al tocar un
+profesional, se ven solo los suyos, empezando por el próximo libre. Al elegir
+un día se despliega la agenda en franjas de una hora, con los turnos libres
+y ocupados de cada profesional. También se llega desde el detalle de un
+profesional con el botón "Solicitar turno". Los turnos se arman a partir de
+la agenda semanal de cada profesional ([data/agendas.ts](data/agendas.ts)) y
+las reservas se guardan en memoria ([services/turnos.ts](services/turnos.ts)).
 
 Los datos siguen siendo estáticos (`data/`), pero ya se consumen a través de
 una capa de servicios asíncrona ([services/profesionales.ts](services/profesionales.ts))
