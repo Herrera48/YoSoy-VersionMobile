@@ -46,13 +46,13 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 
 | # | Feature | Estado |
 |---|---------|--------|
-| 0 | Inicio de sesión, recupero de contraseña y menú principal | En desarrollo — login simulado (acepta cualquier usuario) |
-| 1 | Consultar profesionales disponibles | En desarrollo — listado con FlatList y pantalla de detalle |
-| 2 | Buscar y filtrar profesionales por especialidad | En desarrollo — buscador por texto y chips de especialidad |
-| 3 | Solicitar un turno | En desarrollo — calendario y agenda por hora, por especialidad o por profesional (reservas simuladas) |
-| 4 | Consultar mis turnos | En desarrollo — listado de los turnos reservados, del más cercano al más lejano (reservas simuladas) |
-| 5 | Cancelar un turno o Reprogrramarlo| En desarrollo |
-| 6 | Registrar mi estado de ánimo diario | En desarrollo, actualizado |
+| 0 | Inicio de sesión, recupero de contraseña y menú principal | Login simulado (acepta cualquier usuario) yy sa este para los turnos. incluye recuperacion de contraseña simulada |
+| 1 | Consultar profesionales y especialidades disponibles | Listado con FlatList y pantalla de detalle|
+| 2 | Buscar y filtrar profesionales por especialidad | Buscador por texto y chips de especialidad, modo yy por nombre de especialista |
+| 3 | Solicitar un turno | Utiliza los mismos filtros de profesinales y especialidades — calendario y agenda por hora, por especialidad o por profesional (reservas simuladas) |
+| 4 | Consultar mis turnos | Listado de los turnos reservados, del más cercano al más lejano, desde estos mismos se pueden cancelar o reprogramar (reservas simuladas) |
+| 5 | Cancelar un turno o Reprogramarlo| Listo |
+| 6 | Registrar mi estado de ánimo diario | Permite registrar por dia y horario el estado de animo del paciente atravez de preguntas ya definidas |
 
 La app arranca en el **inicio de sesión**: usuario, contraseña (con botón
 para mostrarla) y el enlace "Olvidé mi contraseña", que lleva a la pantalla
