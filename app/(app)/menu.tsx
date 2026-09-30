@@ -41,6 +41,13 @@ const OPCIONES: Opcion[] = [
     icono: 'time-outline',
     ruta: '/mis-turnos',
   },
+  {
+    id: 'autorregistro',
+    titulo: 'Registrar mi estado de ánimo',
+    descripcion: 'Anotá qué pasó, qué pensaste, cómo te sentiste y qué hiciste.',
+    icono: 'journal-outline',
+    ruta: '/autorregistro',
+  },
 ];
 
 const Pantalla = styled.ScrollView.attrs({
