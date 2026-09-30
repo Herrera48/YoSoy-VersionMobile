@@ -51,8 +51,8 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 | 2 | Buscar y filtrar profesionales por especialidad | En desarrollo — buscador por texto y chips de especialidad |
 | 3 | Solicitar un turno | En desarrollo — calendario y agenda por hora, por especialidad o por profesional (reservas simuladas) |
 | 4 | Consultar mis turnos | En desarrollo — listado de los turnos reservados, del más cercano al más lejano (reservas simuladas) |
-| 5 | Cancelar (y modificar) un turno | En desarrollo — desde cada tarjeta de "Mis turnos" (reservas simuladas) |
-| 6 | Registrar mi estado de ánimo diario | En desarrollo — autorregistro según la planilla (registros simulados, en memoria) |
+| 5 | Cancelar un turno o Reprogrramarlo| En desarrollo |
+| 6 | Registrar mi estado de ánimo diario | En desarrollo, pero no subido |
 
 La app arranca en el **inicio de sesión**: usuario, contraseña (con botón
 para mostrarla) y el enlace "Olvidé mi contraseña", que lleva a la pantalla
@@ -60,22 +60,18 @@ de **recupero por correo**. Por ahora cualquier usuario y contraseña son
 válidos; la validación real se hará contra la API. Una vez adentro se ve el
 **menú** con las cuatro opciones del paciente: la de especialidades y
 profesionales lleva al listado de la Feature 2, la de solicitar turno a la
-Feature 3, la de mis turnos a las Features 4 y 5 y la de estado de ánimo a
-la Feature 6.
+Feature 3 y la de mis turnos a la Feature 4; la de cancelar turno todavía está
+deshabilitada.
 
 La Feature 1 muestra el listado de profesionales con `FlatList` y, al tocar
 una card, navega a una pantalla de detalle con todos sus datos.
 
 La Feature 2 suma, arriba del listado, un buscador por nombre o especialidad
 (no distingue mayúsculas ni tildes) y una fila de chips para filtrar por
-especialidad. Debajo, otra fila de chips filtra por modalidad de atención
-(virtual o presencial); igual que la especialidad, vive en el store de
-Zustand. Si no hay coincidencias, se ofrece limpiar los filtros.
+especialidad. Si no hay coincidencias, se ofrece limpiar los filtros.
 
 La Feature 3 permite pedir un turno con la misma búsqueda del listado
-(texto y chips de especialidad y de modalidad). La modalidad también filtra
-la agenda: con "Virtual" elegido, el calendario y los horarios muestran solo
-los turnos de profesionales que atienden de forma virtual. Con una especialidad elegida, un calendario
+(texto y chips de especialidad). Con una especialidad elegida, un calendario
 marca los días con turnos libres de todos sus profesionales; al tocar un
 profesional, se ven solo los suyos, empezando por el próximo libre. Al elegir
 un día se despliega la agenda en franjas de una hora, con los turnos libres
@@ -94,34 +90,6 @@ hay turnos, ofrece ir a solicitar uno. Al confirmar un turno en la Feature 3,
 muestra datos viejos; la confirmación también tiene un enlace "Ver mis
 turnos". Como las reservas viven en memoria, al recargar la app la lista
 arranca vacía.
-
-La Feature 5 suma, abajo de cada `TurnoCard`, dos acciones:
-
-- **Cancelar**: pide confirmación en la misma tarjeta ("¿Cancelar este
-  turno?" — No / Sí, cancelar), sin `Alert.alert`, que en web no funciona.
-  Al confirmar, el turno se libera y se invalidan las agendas en caché
-  (`['turnos']`) para que vuelva a aparecer como libre.
-- **Modificar**: navega a "Solicitar turno" con el profesional ya elegido y
-  el id del turno (`?turnoAModificar=...`). La pantalla muestra el turno que
-  se está cambiando y, al confirmar, `modificarTurno` lo reemplaza por el
-  nuevo. Primero valida las dos cosas y recién después toca las reservas:
-  si el nuevo horario ya no está libre, el paciente conserva el turno que
-  tenía.
-
-La Feature 6 es el **autorregistro del estado de ánimo**, armado sobre la
-planilla de autorregistro que usa el equipo: por cada situación que afectó
-al paciente se registra la fecha y hora, el acontecimiento estresante, los
-pensamientos, las emociones y reacciones físicas, la conducta y las
-consecuencias. Cada campo muestra las preguntas guía de la planilla
-([data/autorregistro.ts](data/autorregistro.ts)); solo el acontecimiento es
-obligatorio. La fecha y la hora arrancan con el momento actual y se pueden
-corregir (no se aceptan fechas imposibles ni futuras). La pantalla
-`/autorregistro` lista los registros del más reciente al más antiguo en
-[RegistroCard](components/RegistroCard.tsx): cerrada muestra el
-acontecimiento y al tocarla se despliega completa. El formulario está en
-`/autorregistro/nuevo`; al guardar invalida `['autorregistros']` y vuelve a
-la lista. Igual que las reservas, los registros viven en memoria
-([services/autorregistro.ts](services/autorregistro.ts)).
 
 Los datos siguen siendo estáticos (`data/`), pero ya se consumen a través de
 una capa de servicios asíncrona ([services/profesionales.ts](services/profesionales.ts))
