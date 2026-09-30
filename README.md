@@ -56,12 +56,11 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 
 La app arranca en el **inicio de sesión**: usuario, contraseña (con botón
 para mostrarla) y el enlace "Olvidé mi contraseña", que lleva a la pantalla
-de **recupero por correo**. Por ahora cualquier usuario y contraseña son
+de **recupero por correo** Feature 0. Por ahora cualquier usuario y contraseña son
 válidos; la validación real se hará contra la API. Una vez adentro se ve el
 **menú** con las cuatro opciones del paciente: la de especialidades y
-profesionales lleva al listado de la Feature 2, la de solicitar turno a la
-Feature 3 y la de mis turnos a la Feature 4; la de cancelar turno todavía está
-deshabilitada.
+profesionales lleva al listado profesionales y especialidades Feature 1 y Faeatuure2, la de solicitar turno a la
+Feature 3 y la de consultar mis turnos a la Feature 4 yya tiene integrada Feature 5.
 
 La Feature 1 muestra el listado de profesionales con `FlatList` y, al tocar
 una card, navega a una pantalla de detalle con todos sus datos.
