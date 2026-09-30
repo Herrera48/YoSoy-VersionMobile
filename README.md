@@ -51,7 +51,7 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 | 2 | Buscar y filtrar profesionales por especialidad | En desarrollo — buscador por texto y chips de especialidad |
 | 3 | Solicitar un turno | En desarrollo — calendario y agenda por hora, por especialidad o por profesional (reservas simuladas) |
 | 4 | Consultar mis turnos | En desarrollo — listado de los turnos reservados, del más cercano al más lejano (reservas simuladas) |
-| 5 | Cancelar un turno | Pendiente — ya figura en el menú como "Próximamente" |
+| 5 | Cancelar un turno o Reprogrramarlo| En desarrollo |
 | 6 | Registrar mi estado de ánimo diario | Pendiente |
 
 La app arranca en el **inicio de sesión**: usuario, contraseña (con botón
