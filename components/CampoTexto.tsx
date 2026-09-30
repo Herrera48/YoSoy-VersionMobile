@@ -7,9 +7,11 @@ import { theme } from '../constants/theme';
 // Campo de formulario con etiqueta. Recibe todas las props de TextInput
 // (value, onChangeText, secureTextEntry, keyboardType...) y las reenvía.
 // `accesorio` es un elemento opcional a la derecha del campo, por ejemplo el
-// botón para mostrar u ocultar la contraseña.
+// botón para mostrar u ocultar la contraseña. `ayuda` es un texto opcional
+// debajo de la etiqueta, por ejemplo las preguntas guía del autorregistro.
 interface CampoTextoProps extends TextInputProps {
   etiqueta: string;
+  ayuda?: string;
   accesorio?: ReactNode;
   ref?: Ref<TextInput>;
 }
@@ -23,6 +25,12 @@ const Etiqueta = styled.Text`
   font-weight: ${theme.pesos.semi};
   color: ${theme.colores.textoPrincipal};
   margin-bottom: ${theme.espaciado.xs}px;
+`;
+
+const Ayuda = styled.Text`
+  font-size: ${theme.fuentes.sm}px;
+  color: ${theme.colores.textoSecundario};
+  margin-bottom: ${theme.espaciado.sm}px;
 `;
 
 const Caja = styled.View`
@@ -44,6 +52,7 @@ const Campo = styled.TextInput`
 
 export default function CampoTexto({
   etiqueta,
+  ayuda,
   accesorio,
   ref,
   ...props
@@ -51,6 +60,7 @@ export default function CampoTexto({
   return (
     <Contenedor>
       <Etiqueta>{etiqueta}</Etiqueta>
+      {ayuda && <Ayuda>{ayuda}</Ayuda>}
       <Caja>
         <Campo
           ref={ref}

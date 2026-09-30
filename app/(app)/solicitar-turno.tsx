@@ -9,22 +9,30 @@ import AgendaTurnos from '../../components/AgendaTurnos';
 import BotonPrimario from '../../components/BotonPrimario';
 import BuscadorProfesionales from '../../components/BuscadorProfesionales';
 import FiltroEspecialidades from '../../components/FiltroEspecialidades';
+import FiltroModalidad from '../../components/FiltroModalidad';
 import Header from '../../components/Header';
 import ProfesionalOpcion from '../../components/ProfesionalOpcion';
 import { theme } from '../../constants/theme';
 import { obtenerProfesionales } from '../../services/profesionales';
-import { Turno } from '../../types';
+import { obtenerMisTurnos } from '../../services/turnos';
+import { useSesionStore } from '../../store/useSesionStore';
+import { Modalidad, Turno } from '../../types';
 import { coincideConBusqueda } from '../../utils/busqueda';
 import { formatearFechaLarga } from '../../utils/fechas';
 
 // Solicitar turno. La búsqueda es la misma que la del listado de
-// profesionales: texto libre y chips de especialidad.
+// profesionales: texto libre, chips de especialidad y de modalidad (virtual
+// o presencial).
 //  - Con una especialidad elegida, la agenda muestra los turnos de todos sus
 //    profesionales: al elegir un día se ve, hora por hora, quién atiende.
 //  - Al tocar un profesional, la agenda pasa a mostrar solo sus turnos,
 //    empezando por el próximo libre.
 // Desde el detalle de un profesional se llega con ?profesionalId=... y la
 // búsqueda arranca con ese profesional elegido.
+//
+// Desde "Mis turnos", el botón "Modificar" llega además con
+// ?turnoAModificar=...: la pantalla muestra el turno actual y, al confirmar,
+// lo reemplaza por el nuevo en lugar de reservar uno más.
 //
 // Los filtros viven en el estado de la pantalla y no en el store de Zustand:
 // así no se mezclan con los del listado de profesionales.
@@ -101,6 +109,27 @@ const Indicacion = styled.Text`
   margin-top: ${theme.espaciado.xl}px;
 `;
 
+const TurnoActual = styled.View`
+  background-color: ${theme.colores.fondoBadgeEspecialidad};
+  border-radius: ${theme.radios.md}px;
+  padding: ${theme.espaciado.lg}px;
+  margin-bottom: ${theme.espaciado.lg}px;
+`;
+
+const EtiquetaTurnoActual = styled.Text`
+  font-size: ${theme.fuentes.xs}px;
+  font-weight: ${theme.pesos.bold};
+  letter-spacing: ${theme.espaciadoLetra.amplio}px;
+  color: ${theme.colores.violetaOscuro};
+`;
+
+const DetalleTurnoActual = styled.Text`
+  font-size: ${theme.fuentes.md}px;
+  line-height: ${theme.interlineado.md}px;
+  color: ${theme.colores.textoPrincipal};
+  margin-top: ${theme.espaciado.xs}px;
+`;
+
 const Tarjeta = styled.View`
   background-color: ${theme.colores.card};
   border-radius: ${theme.radios.lg}px;
@@ -137,10 +166,16 @@ const DetalleConfirmacion = styled.Text`
 
 export default function SolicitarTurno() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ profesionalId?: string }>();
+  const params = useLocalSearchParams<{
+    profesionalId?: string;
+    turnoAModificar?: string;
+  }>();
+  const turnoAModificar = params.turnoAModificar;
+  const usuario = useSesionStore((state) => state.usuario);
 
   const [busqueda, setBusqueda] = useState('');
   const [especialidad, setEspecialidad] = useState<string | null>(null);
+  const [modalidad, setModalidad] = useState<Modalidad | null>(null);
   const [profesionalId, setProfesionalId] = useState<string | null>(
     params.profesionalId ?? null
   );
@@ -153,7 +188,18 @@ export default function SolicitarTurno() {
     queryFn: () => obtenerProfesionales(especialidad),
   });
 
-  const resultados = (data ?? []).filter((p) => coincideConBusqueda(p, busqueda));
+  // Misma queryKey que "Mis turnos": viniendo de ahí, el turno a cambiar ya
+  // está en el caché y se muestra sin esperar.
+  const { data: misTurnos } = useQuery({
+    queryKey: ['mis-turnos', usuario],
+    queryFn: () => obtenerMisTurnos(usuario ?? ''),
+    enabled: usuario !== null && turnoAModificar !== undefined,
+  });
+  const turnoActual = misTurnos?.find((turno) => turno.id === turnoAModificar);
+
+  const resultados = (data ?? []).filter((p) =>
+    coincideConBusqueda(p, busqueda, modalidad)
+  );
   const profesionalElegido = data?.find((p) => p.id === profesionalId);
 
   // Buscar otra cosa o cambiar de especialidad suelta al profesional elegido.
@@ -164,6 +210,13 @@ export default function SolicitarTurno() {
   const cambiarEspecialidad = (nueva: string | null) => {
     setEspecialidad(nueva);
     setProfesionalId(null);
+  };
+  // La modalidad solo lo suelta si el profesional elegido no atiende así.
+  const cambiarModalidad = (nueva: Modalidad | null) => {
+    setModalidad(nueva);
+    if (nueva && profesionalElegido && profesionalElegido.modalidad !== nueva) {
+      setProfesionalId(null);
+    }
   };
 
   // De quién se muestran los turnos: del profesional elegido o, si no hay,
@@ -193,24 +246,29 @@ export default function SolicitarTurno() {
               color={theme.colores.azulPrimario}
             />
           </Icono>
-          <TituloConfirmacion>¡Turno confirmado!</TituloConfirmacion>
+          <TituloConfirmacion>
+            {turnoAModificar ? '¡Turno modificado!' : '¡Turno confirmado!'}
+          </TituloConfirmacion>
           <DetalleConfirmacion>
             {formatearFechaLarga(turnoReservado.fecha)} a las{' '}
             {turnoReservado.hora} h con {profesional.nombre}{' '}
             {profesional.apellido} ({profesional.especialidad},{' '}
             {profesional.modalidad.toLowerCase()}).
           </DetalleConfirmacion>
-          {/* Vuelve a la pantalla desde la que se pidió el turno (el menú o
-              el detalle del profesional). */}
+          {/* Vuelve a la pantalla desde la que se pidió el turno (el menú, el
+              detalle del profesional o, al modificar, "Mis turnos"). */}
           <BotonPrimario texto="Listo" onPress={volver} />
           {/* replace: desde "Mis turnos", volver no regresa a esta
-              confirmación sino a la pantalla anterior. */}
-          <BotonVerTurnos
-            onPress={() => router.replace('/mis-turnos')}
-            accessibilityRole="button"
-          >
-            <TextoCambiar>Ver mis turnos</TextoCambiar>
-          </BotonVerTurnos>
+              confirmación sino a la pantalla anterior. Al modificar no hace
+              falta: "Listo" ya vuelve a "Mis turnos". */}
+          {!turnoAModificar && (
+            <BotonVerTurnos
+              onPress={() => router.replace('/mis-turnos')}
+              accessibilityRole="button"
+            >
+              <TextoCambiar>Ver mis turnos</TextoCambiar>
+            </BotonVerTurnos>
+          )}
         </Tarjeta>
       </Pantalla>
     );
@@ -286,14 +344,29 @@ export default function SolicitarTurno() {
 
       <Header
         titulo="YoSoy"
-        subtitulo="Buscá por especialidad o por profesional y reservá tu turno."
+        subtitulo={
+          turnoAModificar
+            ? 'Elegí el nuevo día y horario para tu turno.'
+            : 'Buscá por especialidad o por profesional y reservá tu turno.'
+        }
       />
+
+      {turnoActual && (
+        <TurnoActual>
+          <EtiquetaTurnoActual>ESTÁS CAMBIANDO ESTE TURNO</EtiquetaTurnoActual>
+          <DetalleTurnoActual>
+            {formatearFechaLarga(turnoActual.fecha)}, {turnoActual.hora} h con{' '}
+            {turnoActual.profesional.nombre} {turnoActual.profesional.apellido}
+          </DetalleTurnoActual>
+        </TurnoActual>
+      )}
 
       <BuscadorProfesionales valor={busqueda} onCambiar={cambiarBusqueda} />
       <FiltroEspecialidades
         especialidad={especialidad}
         onCambiar={cambiarEspecialidad}
       />
+      <FiltroModalidad modalidad={modalidad} onCambiar={cambiarModalidad} />
 
       <TituloSeccion>
         {profesionalElegido ? 'PROFESIONAL ELEGIDO' : 'PROFESIONALES'}
@@ -304,10 +377,12 @@ export default function SolicitarTurno() {
         <>
           <TituloTurnos>TURNOS</TituloTurnos>
           <AgendaTurnos
-            key={`${por}-${valor}`}
+            key={`${por}-${valor}-${modalidad}`}
             por={por}
             valor={valor}
+            modalidad={modalidad}
             onTurnoReservado={setTurnoReservado}
+            turnoAModificar={turnoAModificar}
           />
         </>
       ) : (

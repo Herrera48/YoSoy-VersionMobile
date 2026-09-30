@@ -94,6 +94,40 @@ export async function reservarTurno(turnoId: string, usuario: string): Promise<v
   reservas[turnoId] = usuario;
 }
 
+// Como lo haría un DELETE /turnos/:id. Solo el paciente que reservó el turno
+// puede cancelarlo; al cancelarlo vuelve a quedar libre para los demás.
+export async function cancelarTurno(turnoId: string, usuario: string): Promise<void> {
+  await esperar();
+
+  if (reservas[turnoId] !== usuario) {
+    throw new Error('Ese turno ya no figura entre tus turnos.');
+  }
+  delete reservas[turnoId];
+}
+
+// Como lo haría un PUT /turnos/:id. Cambia un turno reservado por otro libre:
+// primero verifica las dos cosas y recién después toca las reservas, así si
+// algo falla el paciente conserva el turno que tenía.
+export async function modificarTurno(
+  turnoActualId: string,
+  turnoNuevoId: string,
+  usuario: string
+): Promise<void> {
+  await esperar();
+
+  if (reservas[turnoActualId] !== usuario) {
+    throw new Error('El turno que querés cambiar ya no figura entre tus turnos.');
+  }
+  const nuevoLibre = generarAgenda().some(
+    (turno) => turno.id === turnoNuevoId && turno.disponible
+  );
+  if (!nuevoLibre) {
+    throw new Error('Ese turno ya no está disponible. Elegí otro horario.');
+  }
+  delete reservas[turnoActualId];
+  reservas[turnoNuevoId] = usuario;
+}
+
 // Como lo haría un GET /turnos/mios: los turnos que reservó el paciente y que
 // todavía no pasaron, del más cercano al más lejano. La agenda ya viene
 // ordenada, así que alcanza con filtrar.

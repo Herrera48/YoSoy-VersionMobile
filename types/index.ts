@@ -47,3 +47,30 @@ export interface Turno {
 // Cómo busca turno el paciente: por especialidad (se ven todos los
 // profesionales de esa especialidad) o por un profesional puntual.
 export type BuscarTurnoPor = 'especialidad' | 'profesional';
+
+// Una entrada del autorregistro del estado de ánimo (Feature 6). Sigue las
+// columnas de la planilla de autorregistro: qué pasó, qué pensó el paciente,
+// cómo se sintió, qué hizo y qué pasó después.
+export interface RegistroAnimo {
+  id: string;
+  // Cuándo ocurrió el acontecimiento: AAAA-MM-DD y HH:MM.
+  fecha: string;
+  hora: string;
+  acontecimiento: string;
+  pensamientos: string;
+  emociones: string;
+  conducta: string;
+  consecuencias: string;
+}
+
+// Lo que completa el paciente en el formulario: todo menos el id, que lo
+// asigna el "servidor".
+export type NuevoRegistroAnimo = Omit<RegistroAnimo, 'id'>;
+
+// Los campos de texto libre del registro.
+export type CampoRegistroAnimo =
+  | 'acontecimiento'
+  | 'pensamientos'
+  | 'emociones'
+  | 'conducta'
+  | 'consecuencias';

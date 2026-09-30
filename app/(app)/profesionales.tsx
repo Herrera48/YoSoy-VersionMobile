@@ -6,6 +6,7 @@ import styled from 'styled-components/native';
 
 import BuscadorProfesionales from '../../components/BuscadorProfesionales';
 import FiltroEspecialidades from '../../components/FiltroEspecialidades';
+import FiltroModalidad from '../../components/FiltroModalidad';
 import Header from '../../components/Header';
 import ProfesionalCard from '../../components/ProfesionalCard';
 import { theme } from '../../constants/theme';
@@ -84,6 +85,8 @@ function EncabezadoLista() {
   const especialidad = useFiltrosStore((state) => state.especialidad);
   const setBusqueda = useFiltrosStore((state) => state.setBusqueda);
   const setEspecialidad = useFiltrosStore((state) => state.setEspecialidad);
+  const modalidad = useFiltrosStore((state) => state.modalidad);
+  const setModalidad = useFiltrosStore((state) => state.setModalidad);
 
   // Sin historial (recarga en web o deep link) no hay a dónde volver con
   // back(): se va directo al menú.
@@ -113,6 +116,7 @@ function EncabezadoLista() {
         especialidad={especialidad}
         onCambiar={setEspecialidad}
       />
+      <FiltroModalidad modalidad={modalidad} onCambiar={setModalidad} />
       <TituloSeccion>PROFESIONALES DISPONIBLES</TituloSeccion>
     </>
   );
@@ -122,6 +126,7 @@ export default function Profesionales() {
   const router = useRouter();
   const busqueda = useFiltrosStore((state) => state.busqueda);
   const especialidad = useFiltrosStore((state) => state.especialidad);
+  const modalidad = useFiltrosStore((state) => state.modalidad);
   const limpiarFiltros = useFiltrosStore((state) => state.limpiarFiltros);
 
   // La especialidad es parte de la queryKey: al cambiarla TanStack hace un
@@ -132,14 +137,19 @@ export default function Profesionales() {
     queryFn: () => obtenerProfesionales(especialidad),
   });
 
-  // La búsqueda por texto se resuelve local, sobre lo que ya llegó: filtrar
-  // en cada tecla no justifica una petición nueva.
+  // La búsqueda por texto y la modalidad se resuelven local, sobre lo que ya
+  // llegó: filtrar en cada tecla o en cada chip no justifica una petición
+  // nueva.
   const resultados = useMemo(
-    () => (data ?? []).filter((p) => coincideConBusqueda(p, busqueda)),
-    [data, busqueda]
+    () =>
+      (data ?? []).filter((p) =>
+        coincideConBusqueda(p, busqueda, modalidad)
+      ),
+    [data, busqueda, modalidad]
   );
 
-  const hayFiltros = busqueda.trim() !== '' || especialidad !== null;
+  const hayFiltros =
+    busqueda.trim() !== '' || especialidad !== null || modalidad !== null;
 
   // El estado de carga y los errores se muestran en el lugar de la lista y no
   // reemplazando a la FlatList: así el encabezado, con el buscador, sigue
