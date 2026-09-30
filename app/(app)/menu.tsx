@@ -37,16 +37,9 @@ const OPCIONES: Opcion[] = [
   {
     id: 'mis-turnos',
     titulo: 'Mis turnos',
-    descripcion: 'Consultá los turnos que tenés agendados.',
+    descripcion: 'Consultá, modificá o cancelá los turnos que tenés agendados.',
     icono: 'time-outline',
     ruta: '/mis-turnos',
-  },
-  {
-    id: 'cancelar-turno',
-    titulo: 'Cancelar un turno',
-    descripcion: 'Liberá un turno que ya no vas a usar.',
-    icono: 'close-circle-outline',
-    ruta: null,
   },
 ];
 

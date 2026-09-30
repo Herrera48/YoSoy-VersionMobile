@@ -51,27 +51,30 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 | 2 | Buscar y filtrar profesionales por especialidad | En desarrollo — buscador por texto y chips de especialidad |
 | 3 | Solicitar un turno | En desarrollo — calendario y agenda por hora, por especialidad o por profesional (reservas simuladas) |
 | 4 | Consultar mis turnos | En desarrollo — listado de los turnos reservados, del más cercano al más lejano (reservas simuladas) |
-| 5 | Cancelar un turno | Pendiente — ya figura en el menú como "Próximamente" |
+| 5 | Cancelar (y modificar) un turno | En desarrollo — desde cada tarjeta de "Mis turnos" (reservas simuladas) |
 | 6 | Registrar mi estado de ánimo diario | Pendiente |
 
 La app arranca en el **inicio de sesión**: usuario, contraseña (con botón
 para mostrarla) y el enlace "Olvidé mi contraseña", que lleva a la pantalla
 de **recupero por correo**. Por ahora cualquier usuario y contraseña son
 válidos; la validación real se hará contra la API. Una vez adentro se ve el
-**menú** con las cuatro opciones del paciente: la de especialidades y
+**menú** con las tres opciones del paciente: la de especialidades y
 profesionales lleva al listado de la Feature 2, la de solicitar turno a la
-Feature 3 y la de mis turnos a la Feature 4; la de cancelar turno todavía está
-deshabilitada.
+Feature 3 y la de mis turnos a las Features 4 y 5.
 
 La Feature 1 muestra el listado de profesionales con `FlatList` y, al tocar
 una card, navega a una pantalla de detalle con todos sus datos.
 
 La Feature 2 suma, arriba del listado, un buscador por nombre o especialidad
 (no distingue mayúsculas ni tildes) y una fila de chips para filtrar por
-especialidad. Si no hay coincidencias, se ofrece limpiar los filtros.
+especialidad. Debajo, otra fila de chips filtra por modalidad de atención
+(virtual o presencial); igual que la especialidad, vive en el store de
+Zustand. Si no hay coincidencias, se ofrece limpiar los filtros.
 
 La Feature 3 permite pedir un turno con la misma búsqueda del listado
-(texto y chips de especialidad). Con una especialidad elegida, un calendario
+(texto y chips de especialidad y de modalidad). La modalidad también filtra
+la agenda: con "Virtual" elegido, el calendario y los horarios muestran solo
+los turnos de profesionales que atienden de forma virtual. Con una especialidad elegida, un calendario
 marca los días con turnos libres de todos sus profesionales; al tocar un
 profesional, se ven solo los suyos, empezando por el próximo libre. Al elegir
 un día se despliega la agenda en franjas de una hora, con los turnos libres
@@ -90,6 +93,19 @@ hay turnos, ofrece ir a solicitar uno. Al confirmar un turno en la Feature 3,
 muestra datos viejos; la confirmación también tiene un enlace "Ver mis
 turnos". Como las reservas viven en memoria, al recargar la app la lista
 arranca vacía.
+
+La Feature 5 suma, abajo de cada `TurnoCard`, dos acciones:
+
+- **Cancelar**: pide confirmación en la misma tarjeta ("¿Cancelar este
+  turno?" — No / Sí, cancelar), sin `Alert.alert`, que en web no funciona.
+  Al confirmar, el turno se libera y se invalidan las agendas en caché
+  (`['turnos']`) para que vuelva a aparecer como libre.
+- **Modificar**: navega a "Solicitar turno" con el profesional ya elegido y
+  el id del turno (`?turnoAModificar=...`). La pantalla muestra el turno que
+  se está cambiando y, al confirmar, `modificarTurno` lo reemplaza por el
+  nuevo. Primero valida las dos cosas y recién después toca las reservas:
+  si el nuevo horario ya no está libre, el paciente conserva el turno que
+  tenía.
 
 Los datos siguen siendo estáticos (`data/`), pero ya se consumen a través de
 una capa de servicios asíncrona ([services/profesionales.ts](services/profesionales.ts))

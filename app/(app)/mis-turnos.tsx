@@ -1,5 +1,6 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
+import { useState } from 'react';
 import { ActivityIndicator, FlatList, RefreshControl } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -7,7 +8,7 @@ import BotonPrimario from '../../components/BotonPrimario';
 import Header from '../../components/Header';
 import TurnoCard from '../../components/TurnoCard';
 import { theme } from '../../constants/theme';
-import { obtenerMisTurnos } from '../../services/turnos';
+import { cancelarTurno, obtenerMisTurnos } from '../../services/turnos';
 import { useSesionStore } from '../../store/useSesionStore';
 import { Turno } from '../../types';
 
@@ -17,6 +18,10 @@ import { Turno } from '../../types';
 // Misma estructura que el listado de profesionales: FlatList con el
 // encabezado en ListHeaderComponent y la carga, el error y el estado vacío en
 // ListEmptyComponent. Además se puede deslizar hacia abajo para actualizar.
+//
+// Desde cada tarjeta se puede cancelar el turno (Feature 5) o modificarlo:
+// modificar lleva a "Solicitar turno" con el profesional ya elegido y el id
+// del turno a cambiar, y ahí se elige el nuevo día y horario.
 //
 // Las reservas se guardan en memoria (services/turnos.ts): al recargar la app
 // la lista vuelve a quedar vacía hasta que se pida un turno.
@@ -111,6 +116,15 @@ function EncabezadoLista() {
 export default function MisTurnos() {
   const router = useRouter();
   const usuario = useSesionStore((state) => state.usuario);
+  const queryClient = useQueryClient();
+
+  // Qué turno se está cancelando y, si falló, en cuál y por qué: así el
+  // spinner y el error se ven solo en esa tarjeta.
+  const [cancelandoId, setCancelandoId] = useState<string | null>(null);
+  const [errorCancelacion, setErrorCancelacion] = useState<{
+    turnoId: string;
+    mensaje: string;
+  } | null>(null);
 
   // El usuario va en la queryKey: si cambia la sesión, no se muestran los
   // turnos del anterior. AgendaTurnos invalida ['mis-turnos'] al reservar,
@@ -120,6 +134,34 @@ export default function MisTurnos() {
     queryFn: () => obtenerMisTurnos(usuario ?? ''),
     enabled: usuario !== null,
   });
+
+  const cancelar = async (turno: Turno) => {
+    if (!usuario) {
+      return;
+    }
+    setErrorCancelacion(null);
+    setCancelandoId(turno.id);
+    try {
+      await cancelarTurno(turno.id, usuario);
+      // El turno vuelve a estar libre: las agendas en caché quedaron viejas.
+      queryClient.invalidateQueries({ queryKey: ['turnos'] });
+      await refetch();
+    } catch (e) {
+      setErrorCancelacion({
+        turnoId: turno.id,
+        mensaje: e instanceof Error ? e.message : 'No pudimos cancelar el turno.',
+      });
+    } finally {
+      setCancelandoId(null);
+    }
+  };
+
+  const modificar = (turno: Turno) => {
+    router.push({
+      pathname: '/solicitar-turno',
+      params: { profesionalId: turno.profesional.id, turnoAModificar: turno.id },
+    });
+  };
 
   const renderEstadoLista = () => {
     if (isLoading) {
@@ -160,7 +202,20 @@ export default function MisTurnos() {
       keyExtractor={(turno) => turno.id}
       ListHeaderComponent={EncabezadoLista}
       ListEmptyComponent={renderEstadoLista()}
-      renderItem={({ item }) => <TurnoCard turno={item} />}
+      // Sin extraData la FlatList no se vuelve a dibujar al cambiar estos
+      // estados, porque `data` sigue siendo el mismo.
+      extraData={[cancelandoId, errorCancelacion]}
+      renderItem={({ item }) => (
+        <TurnoCard
+          turno={item}
+          onModificar={() => modificar(item)}
+          onCancelar={() => cancelar(item)}
+          cancelando={cancelandoId === item.id}
+          error={
+            errorCancelacion?.turnoId === item.id ? errorCancelacion.mensaje : null
+          }
+        />
+      )}
       refreshControl={
         <RefreshControl
           refreshing={isRefetching}

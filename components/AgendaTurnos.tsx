@@ -4,9 +4,13 @@ import { ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
 
 import { theme } from '../constants/theme';
-import { obtenerAgendaDeTurnos, reservarTurno } from '../services/turnos';
+import {
+  modificarTurno,
+  obtenerAgendaDeTurnos,
+  reservarTurno,
+} from '../services/turnos';
 import { useSesionStore } from '../store/useSesionStore';
-import { BuscarTurnoPor, Turno } from '../types';
+import { BuscarTurnoPor, Modalidad, Turno } from '../types';
 import {
   aClave,
   desdeClave,
@@ -21,13 +25,18 @@ import GrillaHorarios from './GrillaHorarios';
 // calendario con los días disponibles, la agenda hora por hora del día elegido
 // y la confirmación.
 //
-// La pantalla lo monta con key={`${por}-${valor}`}: al cambiar de
-// especialidad o de profesional se monta de nuevo y el día y el horario
-// elegidos vuelven a cero solos.
+// La pantalla lo monta con key={`${por}-${valor}-${modalidad}`}: al cambiar
+// de especialidad, de profesional o de modalidad se monta de nuevo y el día
+// y el horario elegidos vuelven a cero solos.
 interface AgendaTurnosProps {
   por: BuscarTurnoPor;
   valor: string;
+  // Solo los turnos de profesionales con esta modalidad. null = todos.
+  modalidad: Modalidad | null;
   onTurnoReservado: (turno: Turno) => void;
+  // Id del turno que se está cambiando. Si viene, confirmar reemplaza ese
+  // turno por el elegido en lugar de reservar uno más.
+  turnoAModificar?: string;
 }
 
 const EstadoCarga = styled.View`
@@ -118,7 +127,9 @@ const MensajeError = styled.Text`
 export default function AgendaTurnos({
   por,
   valor,
+  modalidad,
   onTurnoReservado,
+  turnoAModificar,
 }: AgendaTurnosProps) {
   const usuario = useSesionStore((state) => state.usuario);
   const queryClient = useQueryClient();
@@ -135,7 +146,11 @@ export default function AgendaTurnos({
     queryFn: () => obtenerAgendaDeTurnos(por, valor),
   });
 
-  const turnos = data ?? [];
+  // La modalidad se filtra local: la agenda de la especialidad ya llegó (y
+  // queda en caché) con los turnos virtuales y presenciales.
+  const turnos = (data ?? []).filter(
+    (turno) => !modalidad || turno.profesional.modalidad === modalidad
+  );
   const libres = turnos.filter((turno) => turno.disponible);
 
   // Días con al menos un turno libre, sin repetir: los turnos ya vienen
@@ -216,14 +231,24 @@ export default function AgendaTurnos({
     setErrorReserva(null);
     setReservando(true);
     try {
-      await reservarTurno(turnoElegido.id, usuario);
+      if (turnoAModificar) {
+        await modificarTurno(turnoAModificar, turnoElegido.id, usuario);
+        // El turno anterior quedó libre: las agendas en caché quedaron viejas.
+        queryClient.invalidateQueries({ queryKey: ['turnos'] });
+      } else {
+        await reservarTurno(turnoElegido.id, usuario);
+      }
       // "Mis turnos" ya no está al día: la próxima vez que se abra, TanStack
       // vuelve a pedirlos en lugar de mostrar el caché viejo.
       queryClient.invalidateQueries({ queryKey: ['mis-turnos'] });
       onTurnoReservado(turnoElegido);
     } catch (e) {
       setErrorReserva(
-        e instanceof Error ? e.message : 'No pudimos reservar el turno.'
+        e instanceof Error
+          ? e.message
+          : turnoAModificar
+            ? 'No pudimos cambiar el turno.'
+            : 'No pudimos reservar el turno.'
       );
       setTurnoElegido(null);
       refetch();
@@ -291,7 +316,7 @@ export default function AgendaTurnos({
               {turnoElegido.profesional.modalidad.toLowerCase()}.
             </Resumen>
             <BotonPrimario
-              texto="Confirmar turno"
+              texto={turnoAModificar ? 'Confirmar cambio' : 'Confirmar turno'}
               onPress={confirmar}
               cargando={reservando}
             />

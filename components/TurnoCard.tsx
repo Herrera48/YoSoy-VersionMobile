@@ -1,4 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useState } from 'react';
+import { ActivityIndicator } from 'react-native';
 import styled from 'styled-components/native';
 
 import { theme } from '../constants/theme';
@@ -11,12 +13,19 @@ import Badge from './Badge';
 // A la izquierda, un bloque con la fecha para ubicar el turno de un vistazo;
 // a la derecha, la hora, el profesional y los badges de especialidad y
 // modalidad.
+// Abajo, las acciones "Modificar" y "Cancelar". Cancelar pide confirmación en
+// la misma tarjeta (y no con Alert.alert, que en web no funciona).
 interface TurnoCardProps {
   turno: Turno;
+  onModificar: () => void;
+  onCancelar: () => void;
+  // true mientras se está cancelando este turno.
+  cancelando: boolean;
+  // Mensaje si no se pudo cancelar este turno.
+  error: string | null;
 }
 
 const Tarjeta = styled.View`
-  flex-direction: row;
   background-color: ${theme.colores.card};
   border-radius: ${theme.radios.lg}px;
   border-width: 1px;
@@ -28,6 +37,10 @@ const Tarjeta = styled.View`
   shadow-opacity: 0.08;
   shadow-radius: 8px;
   elevation: 2;
+`;
+
+const Contenido = styled.View`
+  flex-direction: row;
 `;
 
 const BloqueFecha = styled.View`
@@ -90,45 +103,147 @@ const Badges = styled.View`
   margin-top: ${theme.espaciado.sm}px;
 `;
 
+const Acciones = styled.View`
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: center;
+  gap: ${theme.espaciado.lg}px;
+  border-top-width: 1px;
+  border-top-color: ${theme.colores.borde};
+  margin-top: ${theme.espaciado.md}px;
+  padding-top: ${theme.espaciado.sm}px;
+`;
+
+const BotonAccion = styled.TouchableOpacity`
+  flex-direction: row;
+  align-items: center;
+  padding-vertical: ${theme.espaciado.xs}px;
+`;
+
+const TextoAccion = styled.Text<{ $peligro?: boolean }>`
+  font-size: ${theme.fuentes.sm}px;
+  font-weight: ${theme.pesos.semi};
+  color: ${({ $peligro }) =>
+    $peligro ? theme.colores.error : theme.colores.azulPrimario};
+  margin-left: ${theme.espaciado.xs}px;
+`;
+
+const Pregunta = styled.Text`
+  flex: 1;
+  font-size: ${theme.fuentes.sm}px;
+  color: ${theme.colores.textoPrincipal};
+`;
+
+const MensajeError = styled.Text`
+  font-size: ${theme.fuentes.sm}px;
+  color: ${theme.colores.error};
+  margin-top: ${theme.espaciado.sm}px;
+`;
+
 // Tres letras en mayúscula: 'miércoles' → 'MIÉ', 'septiembre' → 'SEP'.
 const abreviar = (texto: string) => texto.slice(0, 3).toUpperCase();
 
-export default function TurnoCard({ turno }: TurnoCardProps) {
+export default function TurnoCard({
+  turno,
+  onModificar,
+  onCancelar,
+  cancelando,
+  error,
+}: TurnoCardProps) {
+  const [confirmando, setConfirmando] = useState(false);
   const fecha = desdeClave(turno.fecha);
   const esHoy = turno.fecha === aClave(new Date());
   const { profesional } = turno;
 
   return (
-    <Tarjeta
-      accessible
-      accessibilityLabel={`Turno${esHoy ? ' de hoy' : ''}, ${NOMBRES_DIAS[fecha.getDay()]} ${fecha.getDate()} de ${NOMBRES_MESES[fecha.getMonth()]} a las ${turno.hora} con ${profesional.nombre} ${profesional.apellido}`}
-    >
-      <BloqueFecha>
-        <DiaSemana>{abreviar(NOMBRES_DIAS[fecha.getDay()])}</DiaSemana>
-        <DiaNumero>{fecha.getDate()}</DiaNumero>
-        <Mes>{abreviar(NOMBRES_MESES[fecha.getMonth()])}</Mes>
-      </BloqueFecha>
+    <Tarjeta>
+      <Contenido
+        accessible
+        accessibilityLabel={`Turno${esHoy ? ' de hoy' : ''}, ${NOMBRES_DIAS[fecha.getDay()]} ${fecha.getDate()} de ${NOMBRES_MESES[fecha.getMonth()]} a las ${turno.hora} con ${profesional.nombre} ${profesional.apellido}`}
+      >
+        <BloqueFecha>
+          <DiaSemana>{abreviar(NOMBRES_DIAS[fecha.getDay()])}</DiaSemana>
+          <DiaNumero>{fecha.getDate()}</DiaNumero>
+          <Mes>{abreviar(NOMBRES_MESES[fecha.getMonth()])}</Mes>
+        </BloqueFecha>
 
-      <Datos>
-        <FilaHora>
-          <Ionicons
-            name="time-outline"
-            size={theme.iconos.md}
-            color={theme.colores.azulPrimario}
-          />
-          <Hora>{turno.hora} h</Hora>
-          {esHoy && <Badge texto="Hoy" variante="especialidad" />}
-        </FilaHora>
+        <Datos>
+          <FilaHora>
+            <Ionicons
+              name="time-outline"
+              size={theme.iconos.md}
+              color={theme.colores.azulPrimario}
+            />
+            <Hora>{turno.hora} h</Hora>
+            {esHoy && <Badge texto="Hoy" variante="especialidad" />}
+          </FilaHora>
 
-        <Profesional>
-          {profesional.nombre} {profesional.apellido}
-        </Profesional>
+          <Profesional>
+            {profesional.nombre} {profesional.apellido}
+          </Profesional>
 
-        <Badges>
-          <Badge texto={profesional.especialidad} variante="especialidad" />
-          <Badge texto={profesional.modalidad} variante="modalidad" />
-        </Badges>
-      </Datos>
+          <Badges>
+            <Badge texto={profesional.especialidad} variante="especialidad" />
+            <Badge texto={profesional.modalidad} variante="modalidad" />
+          </Badges>
+        </Datos>
+      </Contenido>
+
+      {error && <MensajeError>{error}</MensajeError>}
+
+      <Acciones>
+        {cancelando ? (
+          <ActivityIndicator size="small" color={theme.colores.error} />
+        ) : confirmando ? (
+          <>
+            <Pregunta>¿Cancelar este turno?</Pregunta>
+            <BotonAccion
+              onPress={() => setConfirmando(false)}
+              accessibilityRole="button"
+              accessibilityLabel="No cancelar el turno"
+            >
+              <TextoAccion>No</TextoAccion>
+            </BotonAccion>
+            <BotonAccion
+              onPress={() => {
+                setConfirmando(false);
+                onCancelar();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Sí, cancelar el turno"
+            >
+              <TextoAccion $peligro>Sí, cancelar</TextoAccion>
+            </BotonAccion>
+          </>
+        ) : (
+          <>
+            <BotonAccion
+              onPress={onModificar}
+              accessibilityRole="button"
+              accessibilityLabel="Modificar el turno"
+            >
+              <Ionicons
+                name="create-outline"
+                size={theme.iconos.md}
+                color={theme.colores.azulPrimario}
+              />
+              <TextoAccion>Modificar</TextoAccion>
+            </BotonAccion>
+            <BotonAccion
+              onPress={() => setConfirmando(true)}
+              accessibilityRole="button"
+              accessibilityLabel="Cancelar el turno"
+            >
+              <Ionicons
+                name="close-circle-outline"
+                size={theme.iconos.md}
+                color={theme.colores.error}
+              />
+              <TextoAccion $peligro>Cancelar</TextoAccion>
+            </BotonAccion>
+          </>
+        )}
+      </Acciones>
     </Tarjeta>
   );
 }
