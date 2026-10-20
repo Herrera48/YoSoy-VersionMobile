@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Link, useRouter } from 'expo-router';
+import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
 import { Platform, TextInput } from 'react-native';
 import styled from 'styled-components/native';
@@ -90,6 +90,12 @@ const MensajeError = styled.Text`
   margin-bottom: ${theme.espaciado.md}px;
 `;
 
+const MensajeExito = styled.Text`
+  font-size: ${theme.fuentes.sm}px;
+  color: ${theme.colores.azulPrimario};
+  margin-bottom: ${theme.espaciado.md}px;
+`;
+
 const EnlaceOlvido = styled(Link)`
   align-self: center;
   margin-top: ${theme.espaciado.lg}px;
@@ -99,8 +105,18 @@ const EnlaceOlvido = styled(Link)`
   color: ${theme.colores.azulPrimario};
 `;
 
+const EnlaceCrearCuenta = styled(Link)`
+  align-self: center;
+  margin-top: ${theme.espaciado.sm}px;
+  padding-vertical: ${theme.espaciado.sm}px;
+  font-size: ${theme.fuentes.md}px;
+  font-weight: ${theme.pesos.semi};
+  color: ${theme.colores.azulPrimario};
+`;
+
 export default function Login() {
   const router = useRouter();
+  const { registrado } = useLocalSearchParams<{ registrado?: string }>();
   const guardarSesion = useSesionStore((state) => state.guardarSesion);
 
   const [usuario, setUsuario] = useState('');
@@ -192,9 +208,17 @@ export default function Login() {
             }
           />
 
+          {!error && registrado && (
+            <MensajeExito>
+              Tu cuenta se creó. Ingresá con tu usuario y contraseña.
+            </MensajeExito>
+          )}
+
           {error && <MensajeError>{error}</MensajeError>}
 
           <BotonPrimario texto="Ingresar" onPress={ingresar} cargando={cargando} />
+
+          <EnlaceCrearCuenta href="/registro">Crear cuenta</EnlaceCrearCuenta>
 
           <EnlaceOlvido href="/recuperar-clave">
             Olvidé mi contraseña

@@ -12,6 +12,17 @@ interface RespuestaRecuperoClave {
   mensaje?: string;
 }
 
+export interface DatosRegistroPaciente {
+  nombre: string;
+  dni: string;
+  fechaNacimiento: string;
+  domicilio: string;
+  telefono: string | null;
+  mail: string;
+  usuario: string;
+  contrasena: string;
+}
+
 export async function iniciarSesion(usuario: string, clave: string): Promise<Sesion> {
   let respuesta: RespuestaLogin;
   try {
@@ -35,6 +46,13 @@ export async function iniciarSesion(usuario: string, clave: string): Promise<Ses
     token: respuesta.token,
     idPaciente: respuesta.idPaciente ?? null,
   };
+}
+
+export async function registrarPaciente(datos: DatosRegistroPaciente): Promise<void> {
+  await apiFetch('/pacientes', {
+    method: 'POST',
+    body: JSON.stringify(datos),
+  });
 }
 
 export async function solicitarRecuperoClave(usuario: string): Promise<string> {

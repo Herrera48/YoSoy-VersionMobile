@@ -19,9 +19,10 @@ interface TurnoCardProps {
   turno: Turno;
   onModificar: () => void;
   onCancelar: () => void;
+  onConfirmar: () => void;
   // true mientras se está cancelando este turno.
   cancelando: boolean;
-  // Mensaje si no se pudo cancelar este turno.
+  confirmandoTurno: boolean;
   error: string | null;
 }
 
@@ -140,6 +141,13 @@ const MensajeError = styled.Text`
   margin-top: ${theme.espaciado.sm}px;
 `;
 
+const MensajePropuesto = styled.Text`
+  font-size: ${theme.fuentes.sm}px;
+  line-height: ${theme.interlineado.sm}px;
+  color: ${theme.colores.violetaOscuro};
+  margin-top: ${theme.espaciado.md}px;
+`;
+
 // Tres letras en mayúscula: 'miércoles' → 'MIÉ', 'septiembre' → 'SEP'.
 const abreviar = (texto: string) => texto.slice(0, 3).toUpperCase();
 
@@ -147,10 +155,12 @@ export default function TurnoCard({
   turno,
   onModificar,
   onCancelar,
+  onConfirmar,
   cancelando,
+  confirmandoTurno,
   error,
 }: TurnoCardProps) {
-  const [confirmando, setConfirmando] = useState(false);
+  const [dialogo, setDialogo] = useState<'cancelar' | 'confirmar' | null>(null);
   const fecha = desdeClave(turno.fecha);
   const esHoy = turno.fecha === aClave(new Date());
   const { profesional } = turno;
@@ -185,20 +195,30 @@ export default function TurnoCard({
           <Badges>
             <Badge texto={profesional.especialidad} variante="especialidad" />
             <Badge texto={profesional.modalidad} variante="modalidad" />
+            {turno.estado && <Badge texto={turno.estado} variante="modalidad" />}
           </Badges>
         </Datos>
       </Contenido>
 
+      {turno.propuestoPorProfesional && (
+        <MensajePropuesto>
+          Tu profesional te propuso este turno. Confirmalo para que quede agendado.
+        </MensajePropuesto>
+      )}
+
       {error && <MensajeError>{error}</MensajeError>}
 
       <Acciones>
-        {cancelando ? (
-          <ActivityIndicator size="small" color={theme.colores.error} />
-        ) : confirmando ? (
+        {cancelando || confirmandoTurno ? (
+          <ActivityIndicator
+            size="small"
+            color={confirmandoTurno ? theme.colores.azulPrimario : theme.colores.error}
+          />
+        ) : dialogo === 'cancelar' ? (
           <>
             <Pregunta>¿Cancelar este turno?</Pregunta>
             <BotonAccion
-              onPress={() => setConfirmando(false)}
+              onPress={() => setDialogo(null)}
               accessibilityRole="button"
               accessibilityLabel="No cancelar el turno"
             >
@@ -206,7 +226,7 @@ export default function TurnoCard({
             </BotonAccion>
             <BotonAccion
               onPress={() => {
-                setConfirmando(false);
+                setDialogo(null);
                 onCancelar();
               }}
               accessibilityRole="button"
@@ -215,8 +235,43 @@ export default function TurnoCard({
               <TextoAccion $peligro>Sí, cancelar</TextoAccion>
             </BotonAccion>
           </>
+        ) : dialogo === 'confirmar' ? (
+          <>
+            <Pregunta>¿Confirmar este turno?</Pregunta>
+            <BotonAccion
+              onPress={() => setDialogo(null)}
+              accessibilityRole="button"
+              accessibilityLabel="No confirmar el turno todavía"
+            >
+              <TextoAccion>No</TextoAccion>
+            </BotonAccion>
+            <BotonAccion
+              onPress={() => {
+                setDialogo(null);
+                onConfirmar();
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Sí, confirmar el turno"
+            >
+              <TextoAccion>Sí, confirmar</TextoAccion>
+            </BotonAccion>
+          </>
         ) : (
           <>
+            {turno.propuestoPorProfesional && (
+              <BotonAccion
+                onPress={() => setDialogo('confirmar')}
+                accessibilityRole="button"
+                accessibilityLabel="Confirmar el turno"
+              >
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={theme.iconos.md}
+                  color={theme.colores.azulPrimario}
+                />
+                <TextoAccion>Confirmar turno</TextoAccion>
+              </BotonAccion>
+            )}
             <BotonAccion
               onPress={onModificar}
               accessibilityRole="button"
@@ -230,7 +285,7 @@ export default function TurnoCard({
               <TextoAccion>Modificar</TextoAccion>
             </BotonAccion>
             <BotonAccion
-              onPress={() => setConfirmando(true)}
+              onPress={() => setDialogo('cancelar')}
               accessibilityRole="button"
               accessibilityLabel="Cancelar el turno"
             >

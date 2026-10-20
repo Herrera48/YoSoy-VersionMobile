@@ -42,6 +42,8 @@ export interface Turno {
   profesional: Profesional;
   // false = ya lo tomó otro paciente o el horario ya pasó.
   disponible: boolean;
+  estado?: string;
+  propuestoPorProfesional?: boolean;
 }
 
 // Cómo busca turno el paciente: por especialidad (se ven todos los

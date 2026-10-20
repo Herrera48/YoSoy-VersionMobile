@@ -8,7 +8,7 @@ import BotonPrimario from '../../components/BotonPrimario';
 import Header from '../../components/Header';
 import TurnoCard from '../../components/TurnoCard';
 import { theme } from '../../constants/theme';
-import { cancelarTurno, obtenerMisTurnos } from '../../services/turnos';
+import { cancelarTurno, confirmarTurno, obtenerMisTurnos } from '../../services/turnos';
 import { useSesionStore } from '../../store/useSesionStore';
 import { Turno } from '../../types';
 
@@ -56,6 +56,16 @@ const TituloSeccion = styled.Text`
   margin-bottom: ${theme.espaciado.lg}px;
 `;
 
+const MensajeExito = styled.Text`
+  font-size: ${theme.fuentes.sm}px;
+  line-height: ${theme.interlineado.sm}px;
+  color: ${theme.colores.azulPrimario};
+  background-color: ${theme.colores.fondoBadgeEspecialidad};
+  border-radius: ${theme.radios.md}px;
+  padding: ${theme.espaciado.md}px;
+  margin-bottom: ${theme.espaciado.lg}px;
+`;
+
 const EstadoLista = styled.View`
   align-items: center;
   margin-top: ${theme.espaciado.xxxl}px;
@@ -85,7 +95,7 @@ const TextoAccion = styled.Text`
 
 // Definido fuera de la pantalla, como en el listado de profesionales: así la
 // FlatList recibe siempre el mismo componente y no lo recrea en cada render.
-function EncabezadoLista() {
+function EncabezadoLista({ mensajeExito }: { mensajeExito: string | null }) {
   const router = useRouter();
 
   // Sin historial (recarga en web o deep link) no hay a dónde volver con
@@ -108,6 +118,7 @@ function EncabezadoLista() {
         <TextoVolver>← Menú</TextoVolver>
       </BotonVolver>
       <Header titulo="YoSoy" subtitulo="Estos son los turnos que tenés agendados." />
+      {mensajeExito && <MensajeExito>{mensajeExito}</MensajeExito>}
       <TituloSeccion>PRÓXIMOS TURNOS</TituloSeccion>
     </>
   );
@@ -126,6 +137,13 @@ export default function MisTurnos() {
     mensaje: string;
   } | null>(null);
 
+  const [confirmandoId, setConfirmandoId] = useState<string | null>(null);
+  const [errorConfirmacion, setErrorConfirmacion] = useState<{
+    turnoId: string;
+    mensaje: string;
+  } | null>(null);
+  const [mensajeExito, setMensajeExito] = useState<string | null>(null);
+
   // El usuario va en la queryKey: si cambia la sesión, no se muestran los
   // turnos del anterior. AgendaTurnos invalida ['mis-turnos'] al reservar,
   // así que al volver acá la lista ya incluye el turno nuevo.
@@ -140,6 +158,8 @@ export default function MisTurnos() {
       return;
     }
     setErrorCancelacion(null);
+    setMensajeExito(null);
+    setErrorConfirmacion(null);
     setCancelandoId(turno.id);
     try {
       await cancelarTurno(turno.id, usuario);
@@ -156,7 +176,28 @@ export default function MisTurnos() {
     }
   };
 
+  const confirmar = async (turno: Turno) => {
+    setErrorConfirmacion(null);
+    setMensajeExito(null);
+    setErrorCancelacion(null);
+    setConfirmandoId(turno.id);
+    try {
+      await confirmarTurno(turno.id);
+      setMensajeExito('Turno confirmado. El profesional va a generar la sala para ese día.');
+      await refetch();
+    } catch (e) {
+      setErrorConfirmacion({
+        turnoId: turno.id,
+        mensaje: e instanceof Error ? e.message : 'No pudimos confirmar el turno.',
+      });
+    } finally {
+      setConfirmandoId(null);
+    }
+  };
+
   const modificar = (turno: Turno) => {
+    setMensajeExito(null);
+    setErrorConfirmacion(null);
     router.push({
       pathname: '/solicitar-turno',
       params: { profesionalId: turno.profesional.id, turnoAModificar: turno.id },
@@ -200,19 +241,25 @@ export default function MisTurnos() {
     <Lista
       data={data ?? []}
       keyExtractor={(turno) => turno.id}
-      ListHeaderComponent={EncabezadoLista}
+      ListHeaderComponent={<EncabezadoLista mensajeExito={mensajeExito} />}
       ListEmptyComponent={renderEstadoLista()}
       // Sin extraData la FlatList no se vuelve a dibujar al cambiar estos
       // estados, porque `data` sigue siendo el mismo.
-      extraData={[cancelandoId, errorCancelacion]}
+      extraData={[cancelandoId, errorCancelacion, confirmandoId, errorConfirmacion, mensajeExito]}
       renderItem={({ item }) => (
         <TurnoCard
           turno={item}
           onModificar={() => modificar(item)}
           onCancelar={() => cancelar(item)}
+          onConfirmar={() => confirmar(item)}
           cancelando={cancelandoId === item.id}
+          confirmandoTurno={confirmandoId === item.id}
           error={
-            errorCancelacion?.turnoId === item.id ? errorCancelacion.mensaje : null
+            errorCancelacion?.turnoId === item.id
+              ? errorCancelacion.mensaje
+              : errorConfirmacion?.turnoId === item.id
+                ? errorConfirmacion.mensaje
+                : null
           }
         />
       )}

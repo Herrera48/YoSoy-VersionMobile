@@ -27,6 +27,8 @@ interface TurnoDetalleApi {
   nombreProfesional: string;
   especialidad: string;
   estadoDescripcion: string;
+  confirmadoPaciente: boolean;
+  creadoPor: string | null;
   fecha: string;
   hora: string;
 }
@@ -201,6 +203,10 @@ export async function cancelarTurno(turnoId: string, usuario: string): Promise<v
   await apiFetch(`/turnos/${turnoId}/cancelar?idPaciente=${idPaciente}`, { method: 'PUT' });
 }
 
+export async function confirmarTurno(turnoId: string): Promise<void> {
+  await apiFetch(`/turnos/${turnoId}/confirmar-paciente`, { method: 'PUT' });
+}
+
 export async function modificarTurno(
   turnoActualId: string,
   turnoNuevoId: string,
@@ -266,6 +272,11 @@ export async function obtenerMisTurnos(usuario: string): Promise<Turno[]> {
           descripcion: '',
         },
         disponible: false,
+        estado: t.estadoDescripcion,
+        propuestoPorProfesional:
+          t.estadoDescripcion === 'Pendiente' &&
+          t.creadoPor === 'profesional' &&
+          !t.confirmadoPaciente,
       })
     )
     .sort((a, b) => `${a.fecha} ${a.hora}`.localeCompare(`${b.fecha} ${b.hora}`));
