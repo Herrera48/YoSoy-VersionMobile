@@ -7,10 +7,10 @@ export type Modalidad = 'Virtual' | 'Presencial';
 
 export type VarianteBadge = 'especialidad' | 'modalidad';
 
-// Lo que devuelve el inicio de sesión. Hoy solo el usuario; con la API
-// sumará el token.
 export interface Sesion {
   usuario: string;
+  token: string;
+  idPaciente: number | null;
 }
 
 export interface Profesional {

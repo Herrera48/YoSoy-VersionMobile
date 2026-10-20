@@ -1,34 +1,101 @@
-import { especialidades } from '../data/especialidades';
-import { profesionales } from '../data/profesionales';
 import { Especialidad, Profesional } from '../types';
-import { esperar } from './simulacion';
+import { ApiError, apiFetch } from './api';
 
-// Capa de acceso a datos. Hoy responde con los datos locales de data/, pero
-// con la misma forma que tendría un fetch a la API: funciones async que
-// devuelven una promesa. Cuando exista el backend solo cambia el cuerpo de
-// estas funciones; las pantallas, que las consumen con useQuery, no se tocan.
-
-// El filtro por especialidad lo resuelve el "servidor", como lo haría un
-// endpoint del tipo GET /profesionales?especialidad=Psiquiatría.
-export async function obtenerProfesionales(
-  especialidad: string | null
-): Promise<Profesional[]> {
-  await esperar();
-
-  if (!especialidad) {
-    return profesionales;
-  }
-  return profesionales.filter((p) => p.especialidad === especialidad);
+interface EspecialidadApi {
+  idEspecialidad: number;
+  nombre: string;
+  estado: string;
 }
 
-// Como lo haría un GET /profesionales/:id. Devuelve null si no existe, para
-// que la pantalla muestre "no encontrado" en lugar de un error.
-export async function obtenerProfesional(id: string): Promise<Profesional | null> {
-  await esperar();
-  return profesionales.find((p) => p.id === id) ?? null;
+interface ProfesionalApi {
+  idProfesional: number;
+  nombre: string;
+  apellido: string | null;
+  matricula: string;
+  idEspecialidad: number;
+  estado: string;
+}
+
+let especialidadesCache: EspecialidadApi[] | null = null;
+
+async function obtenerEspecialidadesApi(): Promise<EspecialidadApi[]> {
+  if (!especialidadesCache) {
+    especialidadesCache = await apiFetch<EspecialidadApi[]>('/especialidades');
+  }
+  return especialidadesCache;
+}
+
+export function avatarDeNombre(nombreCompleto: string): string {
+  const seed = encodeURIComponent(nombreCompleto);
+  return `https://api.dicebear.com/7.x/initials/png?seed=${seed}&backgroundColor=2563EB,6366F1,6D28D9&textColor=ffffff`;
+}
+
+function nombreEspecialidad(idEspecialidad: number, especialidades: EspecialidadApi[]): string {
+  return especialidades.find((e) => e.idEspecialidad === idEspecialidad)?.nombre ?? '';
+}
+
+async function aProfesional(p: ProfesionalApi): Promise<Profesional> {
+  const especialidades = await obtenerEspecialidadesApi();
+  const apellido = p.apellido ?? '';
+  return {
+    id: String(p.idProfesional),
+    nombre: p.nombre,
+    apellido,
+    matricula: p.matricula,
+    especialidad: nombreEspecialidad(p.idEspecialidad, especialidades),
+    modalidad: 'Virtual',
+    avatar: avatarDeNombre(`${p.nombre} ${apellido}`.trim()),
+    descripcion: '',
+  };
 }
 
 export async function obtenerEspecialidades(): Promise<Especialidad[]> {
-  await esperar();
-  return especialidades;
+  const especialidades = await obtenerEspecialidadesApi();
+  return especialidades
+    .filter((e) => e.estado === 'Activo')
+    .map((e) => ({ id: String(e.idEspecialidad), nombre: e.nombre }));
+}
+
+export async function obtenerProfesionales(especialidad: string | null): Promise<Profesional[]> {
+  const especialidades = (await obtenerEspecialidadesApi()).filter((e) => e.estado === 'Activo');
+
+  if (especialidad) {
+    const idEspecialidad = especialidades.find((e) => e.nombre === especialidad)?.idEspecialidad;
+    if (idEspecialidad === undefined) {
+      return [];
+    }
+    const lista = await apiFetch<ProfesionalApi[]>(
+      `/profesionales/activos/especialidad/${idEspecialidad}`
+    );
+    return Promise.all(lista.map(aProfesional));
+  }
+
+  const listas = await Promise.all(
+    especialidades.map((e) =>
+      apiFetch<ProfesionalApi[]>(`/profesionales/activos/especialidad/${e.idEspecialidad}`)
+    )
+  );
+
+  const vistos = new Set<number>();
+  const unidos: ProfesionalApi[] = [];
+  listas.flat().forEach((p) => {
+    if (!vistos.has(p.idProfesional)) {
+      vistos.add(p.idProfesional);
+      unidos.push(p);
+    }
+  });
+
+  return Promise.all(unidos.map(aProfesional));
+}
+
+export async function obtenerProfesional(id: string): Promise<Profesional | null> {
+  try {
+    const p = await apiFetch<ProfesionalApi>(`/profesionales/${id}`);
+    return await aProfesional(p);
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 404) {
+      return null;
+    }
+    throw error;
+  }
 }

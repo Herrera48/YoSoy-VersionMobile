@@ -1,146 +1,272 @@
-import { agendas } from '../data/agendas';
-import { profesionales } from '../data/profesionales';
-import { BuscarTurnoPor, Turno } from '../types';
+import { obtenerProfesional, obtenerProfesionales, avatarDeNombre } from './profesionales';
+import { useSesionStore } from '../store/useSesionStore';
+import { BuscarTurnoPor, Profesional, Turno } from '../types';
 import { aClave, dosDigitos } from '../utils/fechas';
-import { esperar } from './simulacion';
+import { apiFetch } from './api';
 
-// Capa de acceso a los turnos. Igual que services/profesionales.ts, hoy
-// simula la API: arma los turnos a partir de las agendas de data/ y guarda
-// las reservas en memoria (se pierden al recargar la app). Cuando exista el
-// backend solo cambia el cuerpo de estas funciones.
+const DIAS_DE_AGENDA = 14;
+const LIMITE_SIMULTANEO = 6;
 
-// Cuántos días hacia adelante se pueden pedir turnos.
-const DIAS_DE_AGENDA = 45;
-
-// Turnos reservados desde la app: id del turno → usuario que lo reservó.
-const reservas: Record<string, string> = {};
-
-// Simula que otros pacientes ya tomaron parte de la agenda. Es determinístico
-// (depende solo del id) para que un turno no aparezca y desaparezca entre una
-// consulta y otra.
-function ocupadoPorOtroPaciente(id: string): boolean {
-  let suma = 0;
-  for (let i = 0; i < id.length; i++) {
-    suma += id.charCodeAt(i) * (i + 1);
-  }
-  return suma % 3 === 0;
+interface AgendaApi {
+  idAgenda: number;
+  idProfesional: number;
+  dia: string;
+  horaInicio: string;
+  horaFin: string;
+  disponible: boolean;
+  intervaloMinutos: number | null;
 }
 
-// Hora actual en el mismo formato que los turnos (HH:MM), para compararlas
-// como texto.
-function horaActual(ahora: Date): string {
-  return `${dosDigitos(ahora.getHours())}:${dosDigitos(ahora.getMinutes())}`;
+interface OcupadoApi {
+  hora: string;
 }
 
-// Arma la agenda completa desde hoy hasta DIAS_DE_AGENDA, con los turnos
-// libres y los ocupados, ordenada por fecha y hora.
-function generarAgenda(): Turno[] {
-  const ahora = new Date();
-  const horaDeAhora = horaActual(ahora);
-  const turnos: Turno[] = [];
+interface TurnoDetalleApi {
+  idTurno: number;
+  idProfesional: number;
+  nombreProfesional: string;
+  especialidad: string;
+  estadoDescripcion: string;
+  fecha: string;
+  hora: string;
+}
 
-  for (let d = 0; d < DIAS_DE_AGENDA; d++) {
-    const dia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + d);
-    const fecha = aClave(dia);
+const DIAS_SEMANA: Record<string, number> = {
+  domingo: 0,
+  lunes: 1,
+  martes: 2,
+  miercoles: 3,
+  jueves: 4,
+  viernes: 5,
+  sabado: 6,
+};
 
-    agendas.forEach((agenda) => {
-      const profesional = profesionales.find((p) => p.id === agenda.profesionalId);
-      if (!profesional || !agenda.dias.includes(dia.getDay())) {
-        return;
-      }
+function normalizarDia(dia: string): number | undefined {
+  const limpio = dia
+    .trim()
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '');
+  return DIAS_SEMANA[limpio];
+}
 
-      agenda.horarios.forEach((hora) => {
-        const id = `${profesional.id}-${fecha}-${hora}`;
-        // De hoy solo se ofrecen los horarios que todavía no pasaron.
-        const yaPaso = d === 0 && hora <= horaDeAhora;
-        const disponible = !yaPaso && !reservas[id] && !ocupadoPorOtroPaciente(id);
-        turnos.push({ id, fecha, hora, profesional, disponible });
-      });
-    });
+function sumarMinutos(hora: string, minutos: number): string {
+  const [h, m] = hora.split(':').map(Number);
+  const total = h * 60 + m + minutos;
+  const horas = Math.floor(total / 60);
+  const mins = total % 60;
+  return `${dosDigitos(horas)}:${dosDigitos(mins)}`;
+}
+
+function horariosDe(agenda: AgendaApi): string[] {
+  const intervalo = agenda.intervaloMinutos ?? 30;
+  const fin = agenda.horaFin.slice(0, 5);
+  const horarios: string[] = [];
+  let actual = agenda.horaInicio.slice(0, 5);
+  let siguiente = sumarMinutos(actual, intervalo);
+  while (siguiente <= fin) {
+    horarios.push(actual);
+    actual = siguiente;
+    siguiente = sumarMinutos(actual, intervalo);
+  }
+  return horarios;
+}
+
+async function ejecutarLimitado<T>(tareas: (() => Promise<T>)[], limite: number): Promise<T[]> {
+  const resultados: T[] = new Array(tareas.length);
+  let siguiente = 0;
+
+  async function trabajador() {
+    while (siguiente < tareas.length) {
+      const indice = siguiente++;
+      resultados[indice] = await tareas[indice]();
+    }
   }
 
-  return turnos.sort((a, b) =>
-    `${a.fecha} ${a.hora}`.localeCompare(`${b.fecha} ${b.hora}`)
+  await Promise.all(
+    Array.from({ length: Math.min(limite, tareas.length) }, trabajador)
   );
+  return resultados;
 }
 
-// Como lo haría un endpoint del tipo
-// GET /turnos?especialidad=Psiquiatría  o  GET /turnos?profesionalId=3
-// Devuelve también los ocupados, para mostrar la agenda completa del día.
+function partesDeId(turnoId: string): { idProfesional: string; fecha: string; hora: string } {
+  const primerGuion = turnoId.indexOf('-');
+  return {
+    idProfesional: turnoId.slice(0, primerGuion),
+    fecha: turnoId.slice(primerGuion + 1, primerGuion + 11),
+    hora: turnoId.slice(primerGuion + 12),
+  };
+}
+
+interface DiaProfesional {
+  profesional: Profesional;
+  fecha: string;
+  horarios: string[];
+}
+
+async function diasDeProfesional(profesional: Profesional): Promise<DiaProfesional[]> {
+  const agendas = await apiFetch<AgendaApi[]>(`/profesionales/${profesional.id}/agenda`);
+  const disponibles = agendas.filter((a) => a.disponible);
+
+  const ahora = new Date();
+  const dias: DiaProfesional[] = [];
+  for (let d = 0; d < DIAS_DE_AGENDA; d++) {
+    const fechaDia = new Date(ahora.getFullYear(), ahora.getMonth(), ahora.getDate() + d);
+    const fecha = aClave(fechaDia);
+    const agendasDelDia = disponibles.filter(
+      (a) => normalizarDia(a.dia) === fechaDia.getDay()
+    );
+    if (agendasDelDia.length === 0) {
+      continue;
+    }
+    dias.push({ profesional, fecha, horarios: agendasDelDia.flatMap(horariosDe) });
+  }
+  return dias;
+}
+
+async function profesionalesPara(por: BuscarTurnoPor, valor: string): Promise<Profesional[]> {
+  if (por === 'profesional') {
+    const profesional = await obtenerProfesional(valor);
+    return profesional ? [profesional] : [];
+  }
+  return obtenerProfesionales(valor);
+}
+
 export async function obtenerAgendaDeTurnos(
   por: BuscarTurnoPor,
   valor: string
 ): Promise<Turno[]> {
-  await esperar();
+  const profesionales = await profesionalesPara(por, valor);
 
-  return generarAgenda().filter((turno) =>
-    por === 'especialidad'
-      ? turno.profesional.especialidad === valor
-      : turno.profesional.id === valor
+  const diasPorProfesional = await ejecutarLimitado(
+    profesionales.map((profesional) => () => diasDeProfesional(profesional)),
+    LIMITE_SIMULTANEO
   );
+  const dias = diasPorProfesional.flat();
+
+  const ocupadosPorDia = await ejecutarLimitado(
+    dias.map(({ profesional, fecha }) => () =>
+      apiFetch<OcupadoApi[]>(`/turnos/ocupados?idProfesional=${profesional.id}&fecha=${fecha}`)
+    ),
+    LIMITE_SIMULTANEO
+  );
+
+  const ahora = new Date();
+  const hoy = aClave(ahora);
+  const horaDeAhora = `${dosDigitos(ahora.getHours())}:${dosDigitos(ahora.getMinutes())}`;
+
+  const turnos: Turno[] = [];
+  dias.forEach(({ profesional, fecha, horarios }, i) => {
+    const ocupados = new Set(ocupadosPorDia[i].map((o) => o.hora.slice(0, 5)));
+    horarios.forEach((hora) => {
+      const yaPaso = fecha === hoy && hora <= horaDeAhora;
+      turnos.push({
+        id: `${profesional.id}-${fecha}-${hora}`,
+        fecha,
+        hora,
+        profesional,
+        disponible: !ocupados.has(hora) && !yaPaso,
+      });
+    });
+  });
+
+  return turnos.sort((a, b) => `${a.fecha} ${a.hora}`.localeCompare(`${b.fecha} ${b.hora}`));
 }
 
-// Como lo haría un POST /turnos. Vuelve a verificar que el turno siga libre:
-// entre que el paciente lo vio y lo confirmó, otro podría haberlo tomado.
 export async function reservarTurno(turnoId: string, usuario: string): Promise<void> {
-  await esperar();
+  void usuario;
+  const { idProfesional, fecha, hora } = partesDeId(turnoId);
 
-  const sigueLibre = generarAgenda().some(
-    (turno) => turno.id === turnoId && turno.disponible
-  );
-  if (!sigueLibre) {
-    throw new Error('Ese turno ya no está disponible. Elegí otro horario.');
+  try {
+    await apiFetch('/turnos/solicitar', {
+      method: 'POST',
+      body: JSON.stringify({
+        idProfesional: Number(idProfesional),
+        fecha: new Date(`${fecha}T12:00:00`).toISOString(),
+        hora: `${hora}:00`,
+        modalidad: 'Virtual',
+        motivo: null,
+      }),
+    });
+  } catch (error) {
+    throw new Error(
+      error instanceof Error ? error.message : 'Ese turno ya no está disponible. Elegí otro horario.'
+    );
   }
-  reservas[turnoId] = usuario;
 }
 
-// Como lo haría un DELETE /turnos/:id. Solo el paciente que reservó el turno
-// puede cancelarlo; al cancelarlo vuelve a quedar libre para los demás.
 export async function cancelarTurno(turnoId: string, usuario: string): Promise<void> {
-  await esperar();
-
-  if (reservas[turnoId] !== usuario) {
-    throw new Error('Ese turno ya no figura entre tus turnos.');
-  }
-  delete reservas[turnoId];
+  void usuario;
+  const idPaciente = useSesionStore.getState().idPaciente;
+  await apiFetch(`/turnos/${turnoId}/cancelar?idPaciente=${idPaciente}`, { method: 'PUT' });
 }
 
-// Como lo haría un PUT /turnos/:id. Cambia un turno reservado por otro libre:
-// primero verifica las dos cosas y recién después toca las reservas, así si
-// algo falla el paciente conserva el turno que tenía.
 export async function modificarTurno(
   turnoActualId: string,
   turnoNuevoId: string,
   usuario: string
 ): Promise<void> {
-  await esperar();
+  const misTurnos = await obtenerMisTurnos(usuario);
+  const turnoActual = misTurnos.find((t) => t.id === turnoActualId);
+  if (!turnoActual) {
+    throw new Error('Ese turno ya no figura entre tus turnos.');
+  }
 
-  if (reservas[turnoActualId] !== usuario) {
-    throw new Error('El turno que querés cambiar ya no figura entre tus turnos.');
+  const fechaHoraTurno = new Date(`${turnoActual.fecha}T${turnoActual.hora}:00`);
+  const horasRestantes = (fechaHoraTurno.getTime() - Date.now()) / (1000 * 60 * 60);
+  if (horasRestantes < 24) {
+    throw new Error('No se puede reprogramar un turno con menos de 24 horas de anticipación.');
   }
-  const nuevoLibre = generarAgenda().some(
-    (turno) => turno.id === turnoNuevoId && turno.disponible
-  );
-  if (!nuevoLibre) {
-    throw new Error('Ese turno ya no está disponible. Elegí otro horario.');
+
+  await reservarTurno(turnoNuevoId, usuario);
+  try {
+    await cancelarTurno(turnoActualId, usuario);
+  } catch (error) {
+    throw new Error(
+      `Se reservó el turno nuevo, pero no se pudo cancelar el anterior: ${
+        error instanceof Error ? error.message : 'intentá cancelarlo desde Mis turnos.'
+      }`
+    );
   }
-  delete reservas[turnoActualId];
-  reservas[turnoNuevoId] = usuario;
 }
 
-// Como lo haría un GET /turnos/mios: los turnos que reservó el paciente y que
-// todavía no pasaron, del más cercano al más lejano. La agenda ya viene
-// ordenada, así que alcanza con filtrar.
 export async function obtenerMisTurnos(usuario: string): Promise<Turno[]> {
-  await esperar();
+  void usuario;
+  const idPaciente = useSesionStore.getState().idPaciente;
+  if (idPaciente === null) {
+    useSesionStore.getState().cerrarSesion();
+    throw new Error('Tu sesión venció. Volvé a ingresar.');
+  }
+  const detalle = await apiFetch<TurnoDetalleApi[]>(`/pacientes/${idPaciente}/turnos-detalle`);
 
   const ahora = new Date();
   const hoy = aClave(ahora);
-  const horaDeAhora = horaActual(ahora);
+  const horaDeAhora = `${dosDigitos(ahora.getHours())}:${dosDigitos(ahora.getMinutes())}`;
 
-  return generarAgenda().filter(
-    (turno) =>
-      reservas[turno.id] === usuario &&
-      !(turno.fecha === hoy && turno.hora <= horaDeAhora)
-  );
+  return detalle
+    .filter((t) => t.estadoDescripcion !== 'Cancelado' && t.estadoDescripcion !== 'Rechazado')
+    .filter((t) => {
+      const fecha = t.fecha.slice(0, 10);
+      const hora = t.hora.slice(0, 5);
+      return fecha > hoy || (fecha === hoy && hora > horaDeAhora);
+    })
+    .map(
+      (t): Turno => ({
+        id: String(t.idTurno),
+        fecha: t.fecha.slice(0, 10),
+        hora: t.hora.slice(0, 5),
+        profesional: {
+          id: String(t.idProfesional),
+          nombre: t.nombreProfesional,
+          apellido: '',
+          matricula: '',
+          especialidad: t.especialidad,
+          modalidad: 'Virtual',
+          avatar: avatarDeNombre(t.nombreProfesional),
+          descripcion: '',
+        },
+        disponible: false,
+      })
+    )
+    .sort((a, b) => `${a.fecha} ${a.hora}`.localeCompare(`${b.fecha} ${b.hora}`));
 }

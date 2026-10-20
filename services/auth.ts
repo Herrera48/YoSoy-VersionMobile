@@ -1,25 +1,46 @@
 import { Sesion } from '../types';
-import { esperar } from './simulacion';
+import { ApiError, apiFetch } from './api';
 
-// Autenticación SIMULADA: por ahora cualquier usuario y contraseña son
-// válidos. Cuando exista la API, estas funciones pasan a hacer el fetch real
-// (y a lanzar un error si las credenciales son incorrectas); las pantallas ya
-// manejan ese caso con try/catch, así que no hay que tocarlas.
-
-export async function iniciarSesion(
-  usuario: string,
-  clave: string
-): Promise<Sesion> {
-  await esperar();
-  // La clave no se valida todavía; se recibe para que la firma sea la misma
-  // que tendrá con la API.
-  void clave;
-  return { usuario: usuario.trim() };
+interface RespuestaLogin {
+  rol: string;
+  idUsuario: number;
+  token: string;
+  idPaciente?: number | null;
 }
 
-// Por seguridad, la API real responde igual exista o no una cuenta con ese
-// correo: así no se puede averiguar qué correos están registrados.
-export async function solicitarRecuperoClave(correo: string): Promise<void> {
-  await esperar();
-  void correo;
+interface RespuestaRecuperoClave {
+  mensaje?: string;
+}
+
+export async function iniciarSesion(usuario: string, clave: string): Promise<Sesion> {
+  let respuesta: RespuestaLogin;
+  try {
+    respuesta = await apiFetch<RespuestaLogin>('/login', {
+      method: 'POST',
+      body: JSON.stringify({ username: usuario, password: clave }),
+    });
+  } catch (error) {
+    if (error instanceof ApiError && error.status === 401) {
+      throw new Error('Usuario o contraseña incorrectos.');
+    }
+    throw error;
+  }
+
+  if (respuesta.rol !== 'paciente') {
+    throw new Error('Esta app es solo para pacientes.');
+  }
+
+  return {
+    usuario: usuario.trim(),
+    token: respuesta.token,
+    idPaciente: respuesta.idPaciente ?? null,
+  };
+}
+
+export async function solicitarRecuperoClave(usuario: string): Promise<string> {
+  const respuesta = await apiFetch<RespuestaRecuperoClave>('/recuperacion-password', {
+    method: 'POST',
+    body: JSON.stringify({ username: usuario }),
+  });
+  return respuesta?.mensaje ?? '';
 }

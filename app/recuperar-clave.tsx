@@ -9,15 +9,6 @@ import CampoTexto from '../components/CampoTexto';
 import { theme } from '../constants/theme';
 import { solicitarRecuperoClave } from '../services/auth';
 
-// Recupero de contraseña por correo. El paciente ingresa su correo y se le
-// "envía" un enlace para crear una nueva contraseña (hoy simulado, ver
-// services/auth.ts). La pantalla tiene dos estados: el formulario y la
-// confirmación de envío.
-
-// Formato básico de correo: algo@algo.algo, sin espacios. La validación
-// definitiva (que la cuenta exista) la hará la API.
-const FORMATO_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
 const Pantalla = styled.KeyboardAvoidingView.attrs({
   behavior: Platform.OS === 'ios' ? 'padding' : undefined,
 })`
@@ -79,11 +70,6 @@ const Descripcion = styled.Text`
   margin-bottom: ${theme.espaciado.xl}px;
 `;
 
-const Correo = styled.Text`
-  font-weight: ${theme.pesos.semi};
-  color: ${theme.colores.textoPrincipal};
-`;
-
 const MensajeError = styled.Text`
   font-size: ${theme.fuentes.sm}px;
   color: ${theme.colores.error};
@@ -93,13 +79,11 @@ const MensajeError = styled.Text`
 export default function RecuperarClave() {
   const router = useRouter();
 
-  const [correo, setCorreo] = useState('');
+  const [usuario, setUsuario] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
-  // Correo al que se envió el enlace; mientras es null se muestra el formulario.
-  const [correoEnviado, setCorreoEnviado] = useState<string | null>(null);
+  const [mensaje, setMensaje] = useState<string | null>(null);
 
-  // Si se entra directo por URL no hay login en el historial al que volver.
   const volver = () => {
     if (router.canGoBack()) {
       router.back();
@@ -109,23 +93,23 @@ export default function RecuperarClave() {
   };
 
   const enviar = async () => {
-    const correoLimpio = correo.trim();
-    if (correoLimpio === '') {
-      setError('Ingresá tu correo electrónico.');
-      return;
-    }
-    if (!FORMATO_CORREO.test(correoLimpio)) {
-      setError('El correo no tiene un formato válido.');
+    const usuarioLimpio = usuario.trim();
+    if (usuarioLimpio === '') {
+      setError('Ingresá tu usuario.');
       return;
     }
 
     setError(null);
     setCargando(true);
     try {
-      await solicitarRecuperoClave(correoLimpio);
-      setCorreoEnviado(correoLimpio);
-    } catch {
-      setError('No pudimos enviar el correo. Intentá de nuevo.');
+      const respuesta = await solicitarRecuperoClave(usuarioLimpio);
+      setMensaje(respuesta);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'No pudimos enviar la solicitud. Intentá de nuevo.'
+      );
     } finally {
       setCargando(false);
     }
@@ -142,7 +126,7 @@ export default function RecuperarClave() {
           <TextoVolver>← Volver</TextoVolver>
         </BotonVolver>
 
-        {correoEnviado ? (
+        {mensaje ? (
           <Tarjeta>
             <Icono>
               <Ionicons
@@ -152,32 +136,26 @@ export default function RecuperarClave() {
               />
             </Icono>
             <Titulo>Revisá tu correo</Titulo>
-            {/* Mismo mensaje exista o no la cuenta: no revela qué correos
-                están registrados. */}
-            <Descripcion>
-              Si hay una cuenta asociada a <Correo>{correoEnviado}</Correo>,
-              te enviamos un enlace para crear una nueva contraseña. Revisá
-              también la carpeta de spam.
-            </Descripcion>
+            <Descripcion>{mensaje}</Descripcion>
             <BotonPrimario texto="Volver a iniciar sesión" onPress={volver} />
           </Tarjeta>
         ) : (
           <Tarjeta>
             <Titulo>Recuperar contraseña</Titulo>
             <Descripcion>
-              Ingresá el correo con el que te registraste y te enviaremos un
-              enlace para crear una nueva contraseña.
+              Ingresá tu usuario y te enviaremos un enlace para crear una
+              nueva contraseña.
             </Descripcion>
 
             <CampoTexto
-              etiqueta="Correo electrónico"
-              value={correo}
-              onChangeText={setCorreo}
-              placeholder="nombre@correo.com"
-              keyboardType="email-address"
+              etiqueta="Usuario"
+              value={usuario}
+              onChangeText={setUsuario}
+              placeholder="Tu usuario"
+              keyboardType="default"
               autoCapitalize="none"
               autoCorrect={false}
-              autoComplete="email"
+              autoComplete="username"
               returnKeyType="send"
               onSubmitEditing={enviar}
             />

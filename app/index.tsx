@@ -124,11 +124,15 @@ export default function Login() {
     setCargando(true);
     try {
       const sesion = await iniciarSesion(usuario, clave);
-      guardarSesion(sesion.usuario);
+      guardarSesion(sesion.usuario, sesion.token, sesion.idPaciente);
       // replace y no push: una vez adentro, "volver" no debe regresar al login.
       router.replace('/menu');
-    } catch {
-      setError('No pudimos iniciar sesión. Intentá de nuevo.');
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'No pudimos iniciar sesión. Intentá de nuevo.'
+      );
     } finally {
       setCargando(false);
     }
