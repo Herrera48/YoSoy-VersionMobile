@@ -13,7 +13,7 @@ import FiltroModalidad from '../../components/FiltroModalidad';
 import Header from '../../components/Header';
 import ProfesionalOpcion from '../../components/ProfesionalOpcion';
 import { theme } from '../../constants/theme';
-import { obtenerProfesionales } from '../../services/profesionales';
+import { obtenerMisProfesionales } from '../../services/profesionales';
 import { obtenerMisTurnos } from '../../services/turnos';
 import { useSesionStore } from '../../store/useSesionStore';
 import { Modalidad, Turno } from '../../types';
@@ -172,6 +172,7 @@ export default function SolicitarTurno() {
   }>();
   const turnoAModificar = params.turnoAModificar;
   const usuario = useSesionStore((state) => state.usuario);
+  const idPaciente = useSesionStore((state) => state.idPaciente);
 
   const [busqueda, setBusqueda] = useState('');
   const [especialidad, setEspecialidad] = useState<string | null>(null);
@@ -182,10 +183,12 @@ export default function SolicitarTurno() {
   const [turnoReservado, setTurnoReservado] = useState<Turno | null>(null);
 
   // Misma consulta y misma queryKey que el listado: si ya se vio esa
-  // especialidad, llega del caché al instante.
+  // especialidad, llega del caché al instante. Solo se puede pedir turno con
+  // los profesionales asignados a este paciente.
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['profesionales', especialidad],
-    queryFn: () => obtenerProfesionales(especialidad),
+    queryKey: ['mis-profesionales', idPaciente, especialidad],
+    queryFn: () => obtenerMisProfesionales(idPaciente as number, especialidad),
+    enabled: idPaciente !== null,
   });
 
   // Misma queryKey que "Mis turnos": viniendo de ahí, el turno a cambiar ya
@@ -315,9 +318,13 @@ export default function SolicitarTurno() {
     }
 
     if (resultados.length === 0) {
+      const hayFiltros =
+        busqueda.trim() !== '' || especialidad !== null || modalidad !== null;
       return (
         <Indicacion>
-          No encontramos profesionales que coincidan con tu búsqueda.
+          {hayFiltros
+            ? 'No encontramos profesionales que coincidan con tu búsqueda.'
+            : 'Todavía no tenés profesionales asignados. Cuando el equipo de admisión te asigne uno, vas a poder pedirle turno.'}
         </Indicacion>
       );
     }

@@ -24,6 +24,9 @@ interface TurnoCardProps {
   cancelando: boolean;
   confirmandoTurno: boolean;
   error: string | null;
+  // Se pasa solo cuando error es el RN-02 (falta firmar el consentimiento):
+  // agrega un link a esa pantalla en vez de dejar el error sin salida.
+  onIrAConsentimiento?: () => void;
 }
 
 const Tarjeta = styled.View`
@@ -159,6 +162,7 @@ export default function TurnoCard({
   cancelando,
   confirmandoTurno,
   error,
+  onIrAConsentimiento,
 }: TurnoCardProps) {
   const [dialogo, setDialogo] = useState<'cancelar' | 'confirmar' | null>(null);
   const fecha = desdeClave(turno.fecha);
@@ -207,6 +211,12 @@ export default function TurnoCard({
       )}
 
       {error && <MensajeError>{error}</MensajeError>}
+
+      {error && onIrAConsentimiento && (
+        <BotonAccion onPress={onIrAConsentimiento} accessibilityRole="button">
+          <TextoAccion>Ir a firmar el consentimiento</TextoAccion>
+        </BotonAccion>
+      )}
 
       <Acciones>
         {cancelando || confirmandoTurno ? (

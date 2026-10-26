@@ -1,4 +1,4 @@
-import { obtenerProfesional, obtenerProfesionales, avatarDeNombre } from './profesionales';
+import { obtenerProfesional, obtenerMisProfesionales, avatarDeNombre } from './profesionales';
 import { useSesionStore } from '../store/useSesionStore';
 import { BuscarTurnoPor, Profesional, Turno } from '../types';
 import { aClave, dosDigitos } from '../utils/fechas';
@@ -131,7 +131,11 @@ async function profesionalesPara(por: BuscarTurnoPor, valor: string): Promise<Pr
     const profesional = await obtenerProfesional(valor);
     return profesional ? [profesional] : [];
   }
-  return obtenerProfesionales(valor);
+  const idPaciente = useSesionStore.getState().idPaciente;
+  if (idPaciente === null) {
+    return [];
+  }
+  return obtenerMisProfesionales(idPaciente, valor);
 }
 
 export async function obtenerAgendaDeTurnos(

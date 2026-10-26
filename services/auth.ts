@@ -2,10 +2,14 @@ import { Sesion } from '../types';
 import { ApiError, apiFetch } from './api';
 
 interface RespuestaLogin {
-  rol: string;
-  idUsuario: number;
-  token: string;
+  rol?: string;
+  idUsuario?: number;
+  token?: string;
   idPaciente?: number | null;
+  idProfesional?: number | null;
+  // Cuenta del equipo con más de un módulo asignado: el login no elige solo
+  // y pide pasar por la pantalla de selección, que la app todavía no tiene.
+  requiereModulo?: boolean;
 }
 
 interface RespuestaRecuperoClave {
@@ -37,14 +41,21 @@ export async function iniciarSesion(usuario: string, clave: string): Promise<Ses
     throw error;
   }
 
-  if (respuesta.rol !== 'paciente') {
-    throw new Error('Esta app es solo para pacientes.');
+  if (respuesta.requiereModulo) {
+    throw new Error(
+      'Tu cuenta tiene más de un rol asignado: todavía no se puede elegir desde la app. Ingresá desde la web.'
+    );
+  }
+  if (respuesta.rol !== 'paciente' && respuesta.rol !== 'profesional') {
+    throw new Error('Esta app es solo para pacientes y profesionales.');
   }
 
   return {
     usuario: usuario.trim(),
-    token: respuesta.token,
+    token: respuesta.token as string,
+    rol: respuesta.rol,
     idPaciente: respuesta.idPaciente ?? null,
+    idProfesional: respuesta.idProfesional ?? null,
   };
 }
 
