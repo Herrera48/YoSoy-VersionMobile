@@ -42,25 +42,60 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 - `@expo/vector-icons` — íconos
 - `expo-linear-gradient` — degradado del encabezado
 
+## Backend
+
+La app ya habla con la API real de **YoSoy** (login, recupero de clave,
+registro de pacientes, profesionales, turnos, agenda, horarios, pacientes,
+casos, historia clínica, notificaciones, perfil y consentimiento informado):
+toda la capa en [services/](services/) pasa por
+[services/api.ts](services/api.ts), que agrega el token de sesión y apunta a
+la URL que definas en `EXPO_PUBLIC_API_URL` (archivo `.env`). La única
+excepción es el **registro de estado de ánimo**
+([services/autorregistro.ts](services/autorregistro.ts)), que todavía guarda
+los datos en memoria porque esa parte del backend no existe aún.
+
+## Roles
+
+El login devuelve el rol de la cuenta y el menú muestra opciones distintas
+según corresponda:
+
+- **Paciente**: especialidades y profesionales, solicitar turno, mis turnos,
+  registrar estado de ánimo, notificaciones, mi perfil, solicitar cambio de
+  profesional y consentimiento informado de telemedicina.
+- **Profesional**: mis pacientes, agenda, horarios, mis casos y mi perfil.
+
+Las videollamadas (sesión de video, cita urgente) son **exclusivas de la web**
+y no se construyen en la app por decisión de producto.
+
 ## Features
+
+Numeración original de la materia (features 1 a 6) más lo que se agregó
+después de cerrar esas seis:
 
 | # | Feature | Estado |
 |---|---------|--------|
-| 0 | Inicio de sesión, recupero de contraseña y menú principal | Login simulado (acepta cualquier usuario) yy sa este para los turnos. incluye recuperacion de contraseña simulada |
-| 1 | Consultar profesionales y especialidades disponibles | Listado con FlatList y pantalla de detalle|
-| 2 | Buscar y filtrar profesionales por especialidad | Buscador por texto y chips de especialidad, modo yy por nombre de especialista |
-| 3 | Solicitar un turno | Utiliza los mismos filtros de profesinales y especialidades — calendario y agenda por hora, por especialidad o por profesional (reservas simuladas) |
-| 4 | Consultar mis turnos | Listado de los turnos reservados, del más cercano al más lejano, desde estos mismos se pueden cancelar o reprogramar (reservas simuladas) |
-| 5 | Cancelar un turno o Reprogramarlo| Listo |
-| 6 | Registrar mi estado de ánimo diario | Permite registrar por dia y horario el estado de animo del paciente atravez de preguntas ya definidas |
+| 0 | Inicio de sesión, recupero de contraseña y registro | Contra la API real: `POST /login`, `POST /recuperacion-password`, `POST /pacientes` |
+| 1 | Consultar profesionales y especialidades disponibles | Listado con FlatList y pantalla de detalle |
+| 2 | Buscar y filtrar profesionales por especialidad | Buscador por texto y chips de especialidad |
+| 3 | Solicitar un turno | Calendario y agenda por hora, por especialidad o por profesional, contra la agenda real del profesional |
+| 4 | Consultar mis turnos | Listado de los turnos reservados, del más cercano al más lejano |
+| 5 | Cancelar un turno o reprogramarlo | Integrado en Mis turnos |
+| 6 | Registrar mi estado de ánimo diario | Preguntas guiadas; todavía simulado en memoria (sin endpoint en el backend) |
+| 7 | Notificaciones | Avisos de turnos y tratamiento, marcado como leída |
+| 8 | Mi perfil (paciente) | Consulta y edición de datos personales |
+| 9 | Solicitar cambio de profesional | Pide una derivación al equipo de admisión |
+| 10 | Consentimiento informado de telemedicina | Firma requerida antes de confirmar un turno (RN-02) |
+| 11 | Mis pacientes (profesional) | Pacientes asignados y nuevos por confirmar, con acceso a su historia clínica |
+| 12 | Historia clínica (solo lectura) | Datos, evoluciones y sesiones clínicas de un paciente |
+| 13 | Agenda (profesional) | Turnos propios por día, con opción de cancelar |
+| 14 | Horarios (profesional) | Alta, baja y edición de la disponibilidad semanal |
+| 15 | Mis casos (profesional) | Seguimiento de los casos abiertos |
+| 16 | Mi perfil (profesional) | Consulta y edición de datos profesionales |
 
 La app arranca en el **inicio de sesión**: usuario, contraseña (con botón
 para mostrarla) y el enlace "Olvidé mi contraseña", que lleva a la pantalla
-de **recupero por correo** Feature 0. Por ahora cualquier usuario y contraseña son
-válidos; la validación real se hará contra la API. Una vez adentro se ve el
-**menú** con las cuatro opciones del paciente: la de especialidades y
-profesionales lleva al listado profesionales y especialidades Feature 1 y Faeatuure2, la de solicitar turno a la
-Feature 3 y la de consultar mis turnos a la Feature 4 yya tiene integrada Feature 5.
+de **recupero por correo**. El rol que devuelve la API decide si después se
+entra al menú de paciente o al de profesional.
 
 La Feature 1 muestra el listado de profesionales con `FlatList` y, al tocar
 una card, navega a una pantalla de detalle con todos sus datos.
@@ -75,9 +110,9 @@ marca los días con turnos libres de todos sus profesionales; al tocar un
 profesional, se ven solo los suyos, empezando por el próximo libre. Al elegir
 un día se despliega la agenda en franjas de una hora, con los turnos libres
 y ocupados de cada profesional. También se llega desde el detalle de un
-profesional con el botón "Solicitar turno". Los turnos se arman a partir de
-la agenda semanal de cada profesional ([data/agendas.ts](data/agendas.ts)) y
-las reservas se guardan en memoria ([services/turnos.ts](services/turnos.ts)).
+profesional con el botón "Solicitar turno". La disponibilidad y los turnos ya
+ocupados se consultan en vivo contra la API
+([services/turnos.ts](services/turnos.ts)).
 
 La Feature 4 lista, en una `FlatList`, los turnos que reservó el paciente y
 que todavía no pasaron, ordenados del más cercano al más lejano. Cada turno se
@@ -87,13 +122,9 @@ badge "Hoy". Se actualiza deslizando hacia abajo (`RefreshControl`) y, si no
 hay turnos, ofrece ir a solicitar uno. Al confirmar un turno en la Feature 3,
 `AgendaTurnos` invalida la consulta `['mis-turnos']`, así que la lista nunca
 muestra datos viejos; la confirmación también tiene un enlace "Ver mis
-turnos". Como las reservas viven en memoria, al recargar la app la lista
-arranca vacía.
-
-Los datos siguen siendo estáticos (`data/`), pero ya se consumen a través de
-una capa de servicios asíncrona ([services/profesionales.ts](services/profesionales.ts))
-que simula la latencia de una API; todavía no hay backend. Ninguna feature
-está terminada.
+turnos". Si el backend rechaza la confirmación por no tener firmado el
+consentimiento informado (RN-02), la tarjeta ofrece un enlace directo a esa
+pantalla.
 
 ## Cómo levantar el proyecto
 
