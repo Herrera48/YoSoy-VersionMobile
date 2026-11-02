@@ -140,7 +140,7 @@ export default function Login() {
     setCargando(true);
     try {
       const sesion = await iniciarSesion(usuario, clave);
-      guardarSesion(sesion.usuario, sesion.token, sesion.idPaciente);
+      guardarSesion(sesion.usuario, sesion.token, sesion.rol, sesion.idPaciente, sesion.idProfesional);
       // replace y no push: una vez adentro, "volver" no debe regresar al login.
       router.replace('/menu');
     } catch (error) {

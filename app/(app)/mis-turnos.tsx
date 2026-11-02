@@ -195,6 +195,12 @@ export default function MisTurnos() {
     }
   };
 
+  // RN-02: el backend rechaza la confirmación si el paciente no firmó el
+  // consentimiento de telemedicina. Se detecta por el texto del error (la API
+  // no expone un código aparte del mensaje) para ofrecer el link directo.
+  const requiereConsentimiento = (mensaje: string) =>
+    mensaje.includes('firmó el consentimiento informado');
+
   const modificar = (turno: Turno) => {
     setMensajeExito(null);
     setErrorConfirmacion(null);
@@ -260,6 +266,11 @@ export default function MisTurnos() {
               : errorConfirmacion?.turnoId === item.id
                 ? errorConfirmacion.mensaje
                 : null
+          }
+          onIrAConsentimiento={
+            errorConfirmacion?.turnoId === item.id && requiereConsentimiento(errorConfirmacion.mensaje)
+              ? () => router.push('/consentimiento')
+              : undefined
           }
         />
       )}

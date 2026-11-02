@@ -19,7 +19,7 @@ interface Opcion {
   ruta: Href | null;
 }
 
-const OPCIONES: Opcion[] = [
+const OPCIONES_PACIENTE: Opcion[] = [
   {
     id: 'profesionales',
     titulo: 'Especialidades y profesionales',
@@ -47,6 +47,79 @@ const OPCIONES: Opcion[] = [
     descripcion: 'Anotá qué pasó, qué pensaste, cómo te sentiste y qué hiciste.',
     icono: 'journal-outline',
     ruta: '/autorregistro',
+  },
+  {
+    id: 'notificaciones',
+    titulo: 'Notificaciones',
+    descripcion: 'Avisos sobre tus turnos y tu tratamiento.',
+    icono: 'notifications-outline',
+    ruta: '/notificaciones',
+  },
+  {
+    id: 'mi-perfil',
+    titulo: 'Mi perfil',
+    descripcion: 'Consultá y actualizá tus datos personales.',
+    icono: 'person-outline',
+    ruta: '/mi-perfil',
+  },
+  {
+    id: 'cambio-profesional',
+    titulo: 'Solicitar cambio de profesional',
+    descripcion: 'Pedile al equipo de admisión que te asigne otro profesional.',
+    icono: 'swap-horizontal-outline',
+    ruta: '/cambio-profesional',
+  },
+  {
+    id: 'consentimiento',
+    titulo: 'Consentimiento informado',
+    descripcion: 'Firmá el consentimiento para la atención por telemedicina.',
+    icono: 'create-outline',
+    ruta: '/consentimiento',
+  },
+];
+
+const OPCIONES_PROFESIONAL: Opcion[] = [
+  {
+    id: 'mis-pacientes',
+    titulo: 'Mis pacientes',
+    descripcion: 'Consultá tus pacientes asignados y los nuevos por confirmar.',
+    icono: 'people-outline',
+    ruta: '/mis-pacientes',
+  },
+  {
+    id: 'historia-clinica',
+    titulo: 'Historia clínica',
+    descripcion: 'Datos, evoluciones y sesiones clínicas de tus pacientes.',
+    icono: 'document-text-outline',
+    ruta: null,
+  },
+  {
+    id: 'agenda',
+    titulo: 'Agenda',
+    descripcion: 'Mirá y gestioná los turnos de tus pacientes.',
+    icono: 'calendar-outline',
+    ruta: '/agenda',
+  },
+  {
+    id: 'horarios',
+    titulo: 'Horarios',
+    descripcion: 'Definí tus horarios de atención disponibles.',
+    icono: 'time-outline',
+    ruta: '/horarios',
+  },
+  {
+    id: 'mis-casos',
+    titulo: 'Mis casos',
+    descripcion: 'Seguimiento de tus casos abiertos.',
+    icono: 'briefcase-outline',
+    ruta: '/mis-casos',
+  },
+  {
+    id: 'perfil-profesional',
+    titulo: 'Mi perfil',
+    descripcion: 'Consultá y actualizá tus datos profesionales.',
+    icono: 'person-outline',
+    ruta: '/perfil-profesional',
   },
 ];
 
@@ -86,7 +159,10 @@ const TextoCerrarSesion = styled.Text`
 export default function Menu() {
   const router = useRouter();
   const usuario = useSesionStore((state) => state.usuario);
+  const rol = useSesionStore((state) => state.rol);
   const cerrarSesion = useSesionStore((state) => state.cerrarSesion);
+
+  const opciones = rol === 'profesional' ? OPCIONES_PROFESIONAL : OPCIONES_PACIENTE;
 
   const salir = () => {
     // Al quedar sin sesión, el layout de (app) redirige solo al login.
@@ -102,7 +178,7 @@ export default function Menu() {
 
       <TituloSeccion>MENÚ</TituloSeccion>
 
-      {OPCIONES.map((opcion) => {
+      {opciones.map((opcion) => {
         const ruta = opcion.ruta;
         return (
           <MenuOpcion

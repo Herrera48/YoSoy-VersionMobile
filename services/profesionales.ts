@@ -88,6 +88,18 @@ export async function obtenerProfesionales(especialidad: string | null): Promise
   return Promise.all(unidos.map(aProfesional));
 }
 
+export async function obtenerMisProfesionales(
+  idPaciente: number,
+  especialidad: string | null
+): Promise<Profesional[]> {
+  const [todos, asignados] = await Promise.all([
+    obtenerProfesionales(especialidad),
+    apiFetch<{ idProfesional: number }[]>(`/pacientes/${idPaciente}/mis-profesionales`),
+  ]);
+  const idsAsignados = new Set(asignados.map((p) => p.idProfesional));
+  return todos.filter((p) => idsAsignados.has(Number(p.id)));
+}
+
 export async function obtenerProfesional(id: string): Promise<Profesional | null> {
   try {
     const p = await apiFetch<ProfesionalApi>(`/profesionales/${id}`);

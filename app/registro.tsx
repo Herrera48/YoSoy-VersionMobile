@@ -11,6 +11,14 @@ import { iniciarSesion, registrarPaciente } from '../services/auth';
 import { useSesionStore } from '../store/useSesionStore';
 import { aClave, desdeFechaCorta } from '../utils/fechas';
 
+const formatearFechaNacimiento = (texto: string): string => {
+  const digitos = texto.replace(/\D/g, '').slice(0, 8);
+  const dia = digitos.slice(0, 2);
+  const mes = digitos.slice(2, 4);
+  const anio = digitos.slice(4, 8);
+  return [dia, mes, anio].filter(Boolean).join('/');
+};
+
 const REGEX_DNI = /^\d{7,9}$/;
 const REGEX_MAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const REGEX_USUARIO = /^[a-zA-Z0-9_.-]{3,50}$/;
@@ -241,7 +249,7 @@ export default function Registro() {
 
     try {
       const sesion = await iniciarSesion(usuario.trim(), contrasena);
-      guardarSesion(sesion.usuario, sesion.token, sesion.idPaciente);
+      guardarSesion(sesion.usuario, sesion.token, sesion.rol, sesion.idPaciente, sesion.idProfesional);
       router.replace('/menu');
     } catch {
       router.replace({ pathname: '/', params: { registrado: '1' } });
@@ -326,9 +334,10 @@ export default function Registro() {
             ref={refFecha}
             etiqueta="Fecha de nacimiento"
             value={fechaNacimiento}
-            onChangeText={setFechaNacimiento}
+            onChangeText={(texto) => setFechaNacimiento(formatearFechaNacimiento(texto))}
             placeholder="DD/MM/AAAA"
             keyboardType="number-pad"
+            maxLength={10}
             returnKeyType="next"
             onSubmitEditing={() => refDomicilio.current?.focus()}
             submitBehavior="submit"

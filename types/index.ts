@@ -7,10 +7,14 @@ export type Modalidad = 'Virtual' | 'Presencial';
 
 export type VarianteBadge = 'especialidad' | 'modalidad';
 
+export type Rol = 'paciente' | 'profesional';
+
 export interface Sesion {
   usuario: string;
   token: string;
+  rol: Rol;
   idPaciente: number | null;
+  idProfesional: number | null;
 }
 
 export interface Profesional {
@@ -76,3 +80,54 @@ export type CampoRegistroAnimo =
   | 'emociones'
   | 'conducta'
   | 'consecuencias';
+
+export interface Notificacion {
+  id: string;
+  titulo: string;
+  mensaje: string;
+  leida: boolean;
+  // Como la devuelve el servidor: 'DD/MM/AAAA HH:MM'.
+  fecha: string;
+}
+
+// Los datos propios del paciente (pantalla "Mi perfil"). `estado` no se
+// muestra ni se edita, pero hay que reenviarlo tal cual llegó al guardar: el
+// backend no tiene un valor por defecto para esa columna.
+export interface PerfilPaciente {
+  nombre: string;
+  dni: string;
+  // 'AAAA-MM-DD'
+  fechaNacimiento: string;
+  domicilio: string;
+  telefono: string;
+  mail: string;
+  estado: string;
+}
+
+// Los datos propios del profesional (pantalla "Mi perfil" de profesional).
+// `matricula` se muestra pero no se edita desde la app. `segundoNombre`,
+// `segundoApellido`, `sexo`, `origenContacto`, `fechaSolicitud` y `estado` no
+// se muestran ni se editan, pero hay que reenviarlos tal cual llegaron al
+// guardar: el PUT del backend pisa todas las columnas. `slug` y
+// `linkPublicoActivo` son del link público de reserva, que se activa o
+// apaga por separado (PUT /profesionales/{id}/link-publico).
+export interface PerfilProfesional {
+  nombre: string;
+  apellido: string;
+  dni: string;
+  // 'AAAA-MM-DD'
+  fechaNacimiento: string;
+  telefono: string;
+  mail: string;
+  provincia: string;
+  matricula: string;
+  idEspecialidad: string;
+  segundoNombre: string | null;
+  segundoApellido: string | null;
+  sexo: string | null;
+  origenContacto: string | null;
+  fechaSolicitud: string | null;
+  estado: string;
+  slug: string | null;
+  linkPublicoActivo: boolean;
+}

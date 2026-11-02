@@ -10,8 +10,9 @@ import FiltroModalidad from '../../components/FiltroModalidad';
 import Header from '../../components/Header';
 import ProfesionalCard from '../../components/ProfesionalCard';
 import { theme } from '../../constants/theme';
-import { obtenerProfesionales } from '../../services/profesionales';
+import { obtenerMisProfesionales } from '../../services/profesionales';
 import { useFiltrosStore } from '../../store/useFiltrosStore';
+import { useSesionStore } from '../../store/useSesionStore';
 import { Profesional } from '../../types';
 import { coincideConBusqueda } from '../../utils/busqueda';
 
@@ -128,13 +129,17 @@ export default function Profesionales() {
   const especialidad = useFiltrosStore((state) => state.especialidad);
   const modalidad = useFiltrosStore((state) => state.modalidad);
   const limpiarFiltros = useFiltrosStore((state) => state.limpiarFiltros);
+  const idPaciente = useSesionStore((state) => state.idPaciente);
 
-  // La especialidad es parte de la queryKey: al cambiarla TanStack hace un
-  // fetch nuevo, y cada especialidad queda en su propia entrada del caché
-  // (volver a una ya consultada la muestra al instante).
+  // La especialidad y el paciente son parte de la queryKey: al cambiar
+  // cualquiera, TanStack hace un fetch nuevo, y cada combinación queda en su
+  // propia entrada del caché (volver a una ya consultada la muestra al
+  // instante). Solo se piden los profesionales asignados a este paciente, no
+  // todo el catálogo.
   const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ['profesionales', especialidad],
-    queryFn: () => obtenerProfesionales(especialidad),
+    queryKey: ['mis-profesionales', idPaciente, especialidad],
+    queryFn: () => obtenerMisProfesionales(idPaciente as number, especialidad),
+    enabled: idPaciente !== null,
   });
 
   // La búsqueda por texto y la modalidad se resuelven local, sobre lo que ya
@@ -190,7 +195,8 @@ export default function Profesionales() {
     return (
       <EstadoLista>
         <MensajeVacio>
-          No hay profesionales disponibles por el momento.
+          Todavía no tenés profesionales asignados. Cuando el equipo de
+          admisión te asigne uno, va a aparecer acá.
         </MensajeVacio>
       </EstadoLista>
     );
