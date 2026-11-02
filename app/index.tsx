@@ -137,10 +137,6 @@ export default function Login() {
   // Para pasar del campo usuario al de contraseña con la tecla "siguiente".
   const refClave = useRef<TextInputInstance>(null);
 
-  if (!hidratado || sesionGuardada) {
-    return null;
-  }
-
   const entradaMarca = useRef(new Animated.Value(0)).current;
   const entradaTarjeta = useRef(new Animated.Value(0)).current;
   const respiracion = useRef(new Animated.Value(1)).current;
@@ -248,6 +244,10 @@ export default function Login() {
       setCargando(false);
     }
   };
+
+  if (!hidratado || sesionGuardada) {
+    return null;
+  }
 
   return (
     <Pantalla>
