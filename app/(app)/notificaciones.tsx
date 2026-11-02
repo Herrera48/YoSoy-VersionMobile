@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { ActivityIndicator, FlatList, RefreshControl } from 'react-native';
 import styled from 'styled-components/native';
 
+import EntradaAnimada from '../../components/EntradaAnimada';
 import Header from '../../components/Header';
 import NotificacionCard from '../../components/NotificacionCard';
 import { theme } from '../../constants/theme';
@@ -154,8 +155,10 @@ export default function Notificaciones() {
       keyExtractor={(notificacion) => notificacion.id}
       ListHeaderComponent={EncabezadoLista}
       ListEmptyComponent={renderEstadoLista()}
-      renderItem={({ item }) => (
-        <NotificacionCard notificacion={item} onAbrir={() => marcarLeida(item)} />
+      renderItem={({ item, index }) => (
+        <EntradaAnimada indice={index}>
+          <NotificacionCard notificacion={item} onAbrir={() => marcarLeida(item)} />
+        </EntradaAnimada>
       )}
       refreshControl={
         <RefreshControl

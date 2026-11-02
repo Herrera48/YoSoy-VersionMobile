@@ -2,6 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Href, useRouter } from 'expo-router';
 import styled from 'styled-components/native';
 
+import EntradaAnimada from '../../components/EntradaAnimada';
 import Header from '../../components/Header';
 import MenuOpcion, { NombreIcono } from '../../components/MenuOpcion';
 import { theme } from '../../constants/theme';
@@ -178,21 +179,22 @@ export default function Menu() {
 
       <TituloSeccion>MENÚ</TituloSeccion>
 
-      {opciones.map((opcion) => {
+      {opciones.map((opcion, indice) => {
         const ruta = opcion.ruta;
         return (
-          <MenuOpcion
-            key={opcion.id}
-            titulo={opcion.titulo}
-            descripcion={opcion.descripcion}
-            icono={opcion.icono}
-            disponible={ruta !== null}
-            onPress={() => {
-              if (ruta) {
-                router.push(ruta);
-              }
-            }}
-          />
+          <EntradaAnimada key={opcion.id} indice={indice}>
+            <MenuOpcion
+              titulo={opcion.titulo}
+              descripcion={opcion.descripcion}
+              icono={opcion.icono}
+              disponible={ruta !== null}
+              onPress={() => {
+                if (ruta) {
+                  router.push(ruta);
+                }
+              }}
+            />
+          </EntradaAnimada>
         );
       })}
 

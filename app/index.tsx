@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Platform, TextInputInstance } from 'react-native';
+import { Animated, Easing, Platform, TextInputInstance } from 'react-native';
 import styled from 'styled-components/native';
 
 import logoYoSoy from '../assets/images/logo-yosoy.png';
@@ -10,6 +10,7 @@ import CampoTexto from '../components/CampoTexto';
 import { theme } from '../constants/theme';
 import { iniciarSesion } from '../services/auth';
 import { useSesionStore } from '../store/useSesionStore';
+import { USAR_DRIVER_NATIVO } from '../utils/animaciones';
 
 // Pantalla de entrada de la app: inicio de sesión del paciente.
 // Por ahora el servicio acepta cualquier usuario y contraseña (ver
@@ -34,12 +35,12 @@ const Contenido = styled.ScrollView.attrs({
   keyboardShouldPersistTaps: 'handled',
 })``;
 
-const Marca = styled.View`
+const Marca = styled(Animated.View)`
   align-items: center;
   margin-bottom: ${theme.espaciado.xxxl}px;
 `;
 
-const Logo = styled.Image`
+const Logo = styled(Animated.Image)`
   width: 96px;
   height: 96px;
   resize-mode: contain;
@@ -60,7 +61,7 @@ const Tagline = styled.Text`
   margin-top: ${theme.espaciado.sm}px;
 `;
 
-const Tarjeta = styled.View`
+const Tarjeta = styled(Animated.View)`
   background-color: ${theme.colores.card};
   border-radius: ${theme.radios.lg}px;
   border-width: 1px;
@@ -140,11 +141,92 @@ export default function Login() {
     return null;
   }
 
+  const entradaMarca = useRef(new Animated.Value(0)).current;
+  const entradaTarjeta = useRef(new Animated.Value(0)).current;
+  const respiracion = useRef(new Animated.Value(1)).current;
+  const sacudida = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.stagger(180, [
+      Animated.timing(entradaMarca, {
+        toValue: 1,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: USAR_DRIVER_NATIVO,
+      }),
+      Animated.timing(entradaTarjeta, {
+        toValue: 1,
+        duration: 500,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: USAR_DRIVER_NATIVO,
+      }),
+    ]).start();
+
+    const latido = Animated.loop(
+      Animated.sequence([
+        Animated.timing(respiracion, {
+          toValue: 1.06,
+          duration: 1800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: USAR_DRIVER_NATIVO,
+        }),
+        Animated.timing(respiracion, {
+          toValue: 1,
+          duration: 1800,
+          easing: Easing.inOut(Easing.sin),
+          useNativeDriver: USAR_DRIVER_NATIVO,
+        }),
+      ])
+    );
+    latido.start();
+
+    return () => latido.stop();
+  }, [entradaMarca, entradaTarjeta, respiracion]);
+
+  const sacudir = () => {
+    sacudida.setValue(0);
+    Animated.sequence(
+      [10, -10, 7, -7, 3, 0].map((valor) =>
+        Animated.timing(sacudida, {
+          toValue: valor,
+          duration: 50,
+          useNativeDriver: USAR_DRIVER_NATIVO,
+        })
+      )
+    ).start();
+  };
+
+  const estiloMarca = {
+    opacity: entradaMarca,
+    transform: [
+      {
+        translateY: entradaMarca.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-24, 0],
+        }),
+      },
+    ],
+  };
+
+  const estiloTarjeta = {
+    opacity: entradaTarjeta,
+    transform: [
+      {
+        translateY: entradaTarjeta.interpolate({
+          inputRange: [0, 1],
+          outputRange: [40, 0],
+        }),
+      },
+      { translateX: sacudida },
+    ],
+  };
+
   // El error se muestra como texto bajo los campos y no con Alert.alert, que
   // en web no funciona.
   const ingresar = async () => {
     if (usuario.trim() === '' || clave === '') {
       setError('Ingresá tu usuario y tu contraseña.');
+      sacudir();
       return;
     }
 
@@ -161,6 +243,7 @@ export default function Login() {
           ? error.message
           : 'No pudimos iniciar sesión. Intentá de nuevo.'
       );
+      sacudir();
     } finally {
       setCargando(false);
     }
@@ -169,13 +252,16 @@ export default function Login() {
   return (
     <Pantalla>
       <Contenido>
-        <Marca>
-          <Logo source={logoYoSoy} />
+        <Marca style={estiloMarca}>
+          <Logo
+            source={logoYoSoy}
+            style={{ transform: [{ scale: respiracion }] }}
+          />
           <Titulo>YoSoy</Titulo>
           <Tagline>TELEMEDICINA EN SALUD MENTAL</Tagline>
         </Marca>
 
-        <Tarjeta>
+        <Tarjeta style={estiloTarjeta}>
           <TituloFormulario>Iniciar sesión</TituloFormulario>
 
           <CampoTexto

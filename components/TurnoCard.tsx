@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useState } from 'react';
 import { ActivityIndicator } from 'react-native';
+import Animated, { FadeIn, FadeInUp } from 'react-native-reanimated';
 import styled from 'styled-components/native';
 
 import { theme } from '../constants/theme';
@@ -107,7 +108,7 @@ const Badges = styled.View`
   margin-top: ${theme.espaciado.sm}px;
 `;
 
-const Acciones = styled.View`
+const Acciones = styled(Animated.View)`
   flex-direction: row;
   justify-content: flex-end;
   align-items: center;
@@ -138,7 +139,7 @@ const Pregunta = styled.Text`
   color: ${theme.colores.textoPrincipal};
 `;
 
-const MensajeError = styled.Text`
+const MensajeError = styled(Animated.Text)`
   font-size: ${theme.fuentes.sm}px;
   color: ${theme.colores.error};
   margin-top: ${theme.espaciado.sm}px;
@@ -210,7 +211,9 @@ export default function TurnoCard({
         </MensajePropuesto>
       )}
 
-      {error && <MensajeError>{error}</MensajeError>}
+      {error && (
+        <MensajeError entering={FadeInUp.duration(200)}>{error}</MensajeError>
+      )}
 
       {error && onIrAConsentimiento && (
         <BotonAccion onPress={onIrAConsentimiento} accessibilityRole="button">
@@ -218,7 +221,10 @@ export default function TurnoCard({
         </BotonAccion>
       )}
 
-      <Acciones>
+      <Acciones
+        key={cancelando || confirmandoTurno ? 'procesando' : dialogo ?? 'acciones'}
+        entering={FadeIn.duration(180)}
+      >
         {cancelando || confirmandoTurno ? (
           <ActivityIndicator
             size="small"

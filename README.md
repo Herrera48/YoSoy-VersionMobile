@@ -41,6 +41,7 @@ de forma incremental, unidad por unidad, a lo largo de la cursada.
 - Zustand — estado global de los filtros del listado y de la sesión
 - `@expo/vector-icons` — íconos
 - `expo-linear-gradient` — degradado del encabezado
+- `Animated` (React Native) y `react-native-reanimated` — animaciones
 
 ## Backend
 
@@ -125,6 +126,35 @@ muestra datos viejos; la confirmación también tiene un enlace "Ver mis
 turnos". Si el backend rechaza la confirmación por no tener firmado el
 consentimiento informado (RN-02), la tarjeta ofrece un enlace directo a esa
 pantalla.
+
+## Animaciones
+
+Se usan las dos APIs de animación:
+
+**Animated (React Native)**
+
+| Dónde | Qué hace | Funciones |
+|-------|----------|-----------|
+| [Login](app/index.tsx) | La marca y la tarjeta entran una después de la otra | `Animated.stagger`, `Animated.timing`, `interpolate` |
+| [Login](app/index.tsx) | El logo "respira" en bucle | `Animated.loop`, `Animated.sequence` |
+| [Login](app/index.tsx) | La tarjeta se sacude si falta un dato o falla el ingreso | `Animated.sequence` sobre `translateX` |
+| [Header](components/Header.tsx) | Aparece deslizándose y el logo entra con rebote | `Animated.parallel`, `Animated.spring` |
+| [BotonPrimario](components/BotonPrimario.tsx) | Se achica al presionarlo | `Animated.spring` |
+
+**Reanimated**
+
+| Dónde | Qué hace | Funciones |
+|-------|----------|-----------|
+| [EntradaAnimada](components/EntradaAnimada.tsx) | Las cards de menú, profesionales, turnos y notificaciones entran escalonadas | `entering={FadeInDown}` |
+| [Mis turnos](app/(app)/mis-turnos.tsx) | El turno cancelado sale hacia la izquierda | `exiting={FadeOutLeft}` |
+| [TurnoCard](components/TurnoCard.tsx) | Cambio suave entre las acciones y la confirmación; el error aparece desde arriba | `FadeIn`, `FadeInUp` |
+| [NotificacionCard](components/NotificacionCard.tsx) | El mensaje se despliega con fundido y el punto de "sin leer" se achica al leerla | `FadeIn`, `FadeOut`, `ZoomOut` |
+| [Chip](components/Chip.tsx) | Transición de color al activarlo | `useSharedValue`, `withTiming`, `interpolateColor` |
+| [useEscalaPresion](hooks/useEscalaPresion.ts) | Escala al presionar en cards del menú, profesionales y chips | `useSharedValue`, `useAnimatedStyle`, `withSpring` |
+
+En web `Animated` corre sin driver nativo (ver
+[utils/animaciones.ts](utils/animaciones.ts)). Reanimated respeta la opción
+de "reducir movimiento" del sistema.
 
 ## Cómo levantar el proyecto
 
