@@ -1,6 +1,8 @@
+import Animated from 'react-native-reanimated';
 import styled from 'styled-components/native';
 
 import { theme } from '../constants/theme';
+import { useEscalaPresion } from '../hooks/useEscalaPresion';
 import { Modalidad } from '../types';
 import Badge from './Badge';
 
@@ -93,30 +95,36 @@ export default function ProfesionalCard({
   descripcion,
   onPress,
 }: ProfesionalCardProps) {
+  const { estiloEscala, alPresionar, alSoltar } = useEscalaPresion();
+
   return (
-    <Tarjeta
-      activeOpacity={0.7}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={`Ver detalle de ${nombre} ${apellido}`}
-    >
-      <Encabezado>
-        <Avatar source={{ uri: avatar }} />
-        <Identidad>
-          <Nombre>
-            {nombre} {apellido}
-          </Nombre>
-          <Matricula>{matricula}</Matricula>
-        </Identidad>
-      </Encabezado>
+    <Animated.View style={estiloEscala}>
+      <Tarjeta
+        activeOpacity={0.9}
+        onPress={onPress}
+        onPressIn={alPresionar}
+        onPressOut={alSoltar}
+        accessibilityRole="button"
+        accessibilityLabel={`Ver detalle de ${nombre} ${apellido}`}
+      >
+        <Encabezado>
+          <Avatar source={{ uri: avatar }} />
+          <Identidad>
+            <Nombre>
+              {nombre} {apellido}
+            </Nombre>
+            <Matricula>{matricula}</Matricula>
+          </Identidad>
+        </Encabezado>
 
-      <Descripcion>{descripcion}</Descripcion>
+        <Descripcion>{descripcion}</Descripcion>
 
-      <Etiquetas>
-        <Badge texto={especialidad} variante="especialidad" />
-        <Separador />
-        <Badge texto={modalidad} variante="modalidad" />
-      </Etiquetas>
-    </Tarjeta>
+        <Etiquetas>
+          <Badge texto={especialidad} variante="especialidad" />
+          <Separador />
+          <Badge texto={modalidad} variante="modalidad" />
+        </Etiquetas>
+      </Tarjeta>
+    </Animated.View>
   );
 }

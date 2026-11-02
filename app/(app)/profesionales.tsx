@@ -5,6 +5,7 @@ import { ActivityIndicator, FlatList } from 'react-native';
 import styled from 'styled-components/native';
 
 import BuscadorProfesionales from '../../components/BuscadorProfesionales';
+import EntradaAnimada from '../../components/EntradaAnimada';
 import FiltroEspecialidades from '../../components/FiltroEspecialidades';
 import FiltroModalidad from '../../components/FiltroModalidad';
 import Header from '../../components/Header';
@@ -208,22 +209,24 @@ export default function Profesionales() {
       keyExtractor={(profesional) => profesional.id}
       ListHeaderComponent={EncabezadoLista}
       ListEmptyComponent={renderEstadoLista()}
-      renderItem={({ item }) => (
-        <ProfesionalCard
-          nombre={item.nombre}
-          apellido={item.apellido}
-          matricula={item.matricula}
-          especialidad={item.especialidad}
-          modalidad={item.modalidad}
-          avatar={item.avatar}
-          descripcion={item.descripcion}
-          onPress={() =>
-            router.push({
-              pathname: '/profesional/[id]',
-              params: { id: item.id },
-            })
-          }
-        />
+      renderItem={({ item, index }) => (
+        <EntradaAnimada indice={index}>
+          <ProfesionalCard
+            nombre={item.nombre}
+            apellido={item.apellido}
+            matricula={item.matricula}
+            especialidad={item.especialidad}
+            modalidad={item.modalidad}
+            avatar={item.avatar}
+            descripcion={item.descripcion}
+            onPress={() =>
+              router.push({
+                pathname: '/profesional/[id]',
+                params: { id: item.id },
+              })
+            }
+          />
+        </EntradaAnimada>
       )}
     />
   );

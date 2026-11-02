@@ -1,8 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
 import { ComponentProps } from 'react';
+import Animated from 'react-native-reanimated';
 import styled from 'styled-components/native';
 
 import { theme } from '../constants/theme';
+import { useEscalaPresion } from '../hooks/useEscalaPresion';
 import Badge from './Badge';
 
 // Opción del menú principal. Presentacional, igual que ProfesionalCard: no
@@ -75,41 +77,47 @@ export default function MenuOpcion({
   disponible,
   onPress,
 }: MenuOpcionProps) {
+  const { estiloEscala, alPresionar, alSoltar } = useEscalaPresion();
+
   return (
-    <Tarjeta
-      $disponible={disponible}
-      disabled={!disponible}
-      activeOpacity={0.7}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel={disponible ? titulo : `${titulo}, próximamente`}
-      accessibilityState={{ disabled: !disponible }}
-    >
-      <CirculoIcono>
-        <Ionicons
-          name={icono}
-          size={theme.iconos.lg}
-          color={theme.colores.azulPrimario}
-        />
-      </CirculoIcono>
+    <Animated.View style={estiloEscala}>
+      <Tarjeta
+        $disponible={disponible}
+        disabled={!disponible}
+        activeOpacity={0.9}
+        onPress={onPress}
+        onPressIn={alPresionar}
+        onPressOut={alSoltar}
+        accessibilityRole="button"
+        accessibilityLabel={disponible ? titulo : `${titulo}, próximamente`}
+        accessibilityState={{ disabled: !disponible }}
+      >
+        <CirculoIcono>
+          <Ionicons
+            name={icono}
+            size={theme.iconos.lg}
+            color={theme.colores.azulPrimario}
+          />
+        </CirculoIcono>
 
-      <Textos>
-        <Titulo>{titulo}</Titulo>
-        <Descripcion>{descripcion}</Descripcion>
-        {!disponible && (
-          <Proximamente>
-            <Badge texto="Próximamente" variante="modalidad" />
-          </Proximamente>
+        <Textos>
+          <Titulo>{titulo}</Titulo>
+          <Descripcion>{descripcion}</Descripcion>
+          {!disponible && (
+            <Proximamente>
+              <Badge texto="Próximamente" variante="modalidad" />
+            </Proximamente>
+          )}
+        </Textos>
+
+        {disponible && (
+          <Ionicons
+            name="chevron-forward"
+            size={theme.iconos.md}
+            color={theme.colores.textoSecundario}
+          />
         )}
-      </Textos>
-
-      {disponible && (
-        <Ionicons
-          name="chevron-forward"
-          size={theme.iconos.md}
-          color={theme.colores.textoSecundario}
-        />
-      )}
-    </Tarjeta>
+      </Tarjeta>
+    </Animated.View>
   );
 }

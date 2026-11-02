@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Animated, { FadeIn, FadeOut, ZoomOut } from 'react-native-reanimated';
 import styled from 'styled-components/native';
 
 import { theme } from '../constants/theme';
@@ -87,11 +88,22 @@ export default function NotificacionCard({ notificacion, onAbrir }: Notificacion
       }`}
     >
       <Encabezado>
-        {!notificacion.leida && <Punto />}
+        {!notificacion.leida && (
+          <Animated.View exiting={ZoomOut.duration(200)}>
+            <Punto />
+          </Animated.View>
+        )}
         <Textos>
           <Titulo $leida={notificacion.leida}>{notificacion.titulo}</Titulo>
           <Fecha>{notificacion.fecha}</Fecha>
-          {abierto && <Mensaje>{notificacion.mensaje}</Mensaje>}
+          {abierto && (
+            <Animated.View
+              entering={FadeIn.duration(220)}
+              exiting={FadeOut.duration(150)}
+            >
+              <Mensaje>{notificacion.mensaje}</Mensaje>
+            </Animated.View>
+          )}
         </Textos>
       </Encabezado>
     </Tarjeta>

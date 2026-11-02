@@ -5,6 +5,7 @@ import { ActivityIndicator, FlatList, RefreshControl } from 'react-native';
 import styled from 'styled-components/native';
 
 import BotonPrimario from '../../components/BotonPrimario';
+import EntradaAnimada from '../../components/EntradaAnimada';
 import Header from '../../components/Header';
 import TurnoCard from '../../components/TurnoCard';
 import { theme } from '../../constants/theme';
@@ -252,27 +253,29 @@ export default function MisTurnos() {
       // Sin extraData la FlatList no se vuelve a dibujar al cambiar estos
       // estados, porque `data` sigue siendo el mismo.
       extraData={[cancelandoId, errorCancelacion, confirmandoId, errorConfirmacion, mensajeExito]}
-      renderItem={({ item }) => (
-        <TurnoCard
-          turno={item}
-          onModificar={() => modificar(item)}
-          onCancelar={() => cancelar(item)}
-          onConfirmar={() => confirmar(item)}
-          cancelando={cancelandoId === item.id}
-          confirmandoTurno={confirmandoId === item.id}
-          error={
-            errorCancelacion?.turnoId === item.id
-              ? errorCancelacion.mensaje
-              : errorConfirmacion?.turnoId === item.id
-                ? errorConfirmacion.mensaje
-                : null
-          }
-          onIrAConsentimiento={
-            errorConfirmacion?.turnoId === item.id && requiereConsentimiento(errorConfirmacion.mensaje)
-              ? () => router.push('/consentimiento')
-              : undefined
-          }
-        />
+      renderItem={({ item, index }) => (
+        <EntradaAnimada indice={index} salida>
+          <TurnoCard
+            turno={item}
+            onModificar={() => modificar(item)}
+            onCancelar={() => cancelar(item)}
+            onConfirmar={() => confirmar(item)}
+            cancelando={cancelandoId === item.id}
+            confirmandoTurno={confirmandoId === item.id}
+            error={
+              errorCancelacion?.turnoId === item.id
+                ? errorCancelacion.mensaje
+                : errorConfirmacion?.turnoId === item.id
+                  ? errorConfirmacion.mensaje
+                  : null
+            }
+            onIrAConsentimiento={
+              errorConfirmacion?.turnoId === item.id && requiereConsentimiento(errorConfirmacion.mensaje)
+                ? () => router.push('/consentimiento')
+                : undefined
+            }
+          />
+        </EntradaAnimada>
       )}
       refreshControl={
         <RefreshControl

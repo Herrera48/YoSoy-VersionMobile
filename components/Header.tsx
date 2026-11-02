@@ -1,8 +1,11 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { useEffect, useRef } from 'react';
+import { Animated, Easing } from 'react-native';
 import styled from 'styled-components/native';
 
 import logoYoSoy from '../assets/images/logo-yosoy.png';
 import { theme } from '../constants/theme';
+import { USAR_DRIVER_NATIVO } from '../utils/animaciones';
 
 // El tagline es parte fija de la identidad de YoSoy, por eso viaja como valor
 // por defecto y no hay que repetirlo en cada pantalla que use el Header.
@@ -37,7 +40,7 @@ const Marca = styled.View`
 
 // El logo es azul (#235DA7, el de la marca web) y sobre el degradado se
 // perdería. En lugar de recolorearlo, se apoya sobre un círculo blanco.
-const FondoLogo = styled.View`
+const FondoLogo = styled(Animated.View)`
   width: 64px;
   height: 64px;
   border-radius: 32px;
@@ -84,17 +87,47 @@ export default function Header({
   subtitulo,
   tagline = TAGLINE_YOSOY,
 }: HeaderProps) {
-  return (
-    <Contenedor>
-      <Marca>
-        <FondoLogo>
-          <Logo source={logoYoSoy} />
-        </FondoLogo>
-        <Titulo>{titulo}</Titulo>
-      </Marca>
+  const entrada = useRef(new Animated.Value(0)).current;
+  const escalaLogo = useRef(new Animated.Value(0.6)).current;
 
-      <Tagline>{tagline}</Tagline>
-      <Subtitulo>{subtitulo}</Subtitulo>
-    </Contenedor>
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(entrada, {
+        toValue: 1,
+        duration: 450,
+        easing: Easing.out(Easing.cubic),
+        useNativeDriver: USAR_DRIVER_NATIVO,
+      }),
+      Animated.spring(escalaLogo, {
+        toValue: 1,
+        friction: 5,
+        tension: 80,
+        delay: 150,
+        useNativeDriver: USAR_DRIVER_NATIVO,
+      }),
+    ]).start();
+  }, [entrada, escalaLogo]);
+
+  const desplazamiento = entrada.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-16, 0],
+  });
+
+  return (
+    <Animated.View
+      style={{ opacity: entrada, transform: [{ translateY: desplazamiento }] }}
+    >
+      <Contenedor>
+        <Marca>
+          <FondoLogo style={{ transform: [{ scale: escalaLogo }] }}>
+            <Logo source={logoYoSoy} />
+          </FondoLogo>
+          <Titulo>{titulo}</Titulo>
+        </Marca>
+
+        <Tagline>{tagline}</Tagline>
+        <Subtitulo>{subtitulo}</Subtitulo>
+      </Contenedor>
+    </Animated.View>
   );
 }
