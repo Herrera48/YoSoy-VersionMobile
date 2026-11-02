@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Platform, TextInput } from 'react-native';
+import { Platform, TextInputInstance } from 'react-native';
 import styled from 'styled-components/native';
 
 import BotonPrimario from '../components/BotonPrimario';
@@ -162,14 +162,14 @@ export default function Registro() {
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
-  const refDni = useRef<TextInput>(null);
-  const refFecha = useRef<TextInput>(null);
-  const refDomicilio = useRef<TextInput>(null);
-  const refTelefono = useRef<TextInput>(null);
-  const refMail = useRef<TextInput>(null);
-  const refUsuario = useRef<TextInput>(null);
-  const refContrasena = useRef<TextInput>(null);
-  const refRepetir = useRef<TextInput>(null);
+  const refDni = useRef<TextInputInstance>(null);
+  const refFecha = useRef<TextInputInstance>(null);
+  const refDomicilio = useRef<TextInputInstance>(null);
+  const refTelefono = useRef<TextInputInstance>(null);
+  const refMail = useRef<TextInputInstance>(null);
+  const refUsuario = useRef<TextInputInstance>(null);
+  const refContrasena = useRef<TextInputInstance>(null);
+  const refRepetir = useRef<TextInputInstance>(null);
 
   const volverAlLogin = () => {
     if (router.canGoBack()) {

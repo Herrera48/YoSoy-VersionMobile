@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, TextInput } from 'react-native';
+import { ActivityIndicator, TextInputInstance } from 'react-native';
 import styled from 'styled-components/native';
 
 import BotonPrimario from '../../components/BotonPrimario';
@@ -140,11 +140,11 @@ export default function MiPerfil() {
     }
   }, [data]);
 
-  const refDni = useRef<TextInput>(null);
-  const refFecha = useRef<TextInput>(null);
-  const refDomicilio = useRef<TextInput>(null);
-  const refTelefono = useRef<TextInput>(null);
-  const refMail = useRef<TextInput>(null);
+  const refDni = useRef<TextInputInstance>(null);
+  const refFecha = useRef<TextInputInstance>(null);
+  const refDomicilio = useRef<TextInputInstance>(null);
+  const refTelefono = useRef<TextInputInstance>(null);
+  const refMail = useRef<TextInputInstance>(null);
 
   const volver = () => {
     if (router.canGoBack()) {

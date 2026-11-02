@@ -160,7 +160,7 @@ export default function Notificaciones() {
       refreshControl={
         <RefreshControl
           refreshing={isRefetching}
-          onRefresh={refetch}
+          onRefresh={() => { refetch(); }}
           colors={[theme.colores.azulPrimario]}
           tintColor={theme.colores.azulPrimario}
         />

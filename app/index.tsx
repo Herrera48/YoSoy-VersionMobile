@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
 import { useRef, useState } from 'react';
-import { Platform, TextInput } from 'react-native';
+import { Platform, TextInputInstance } from 'react-native';
 import styled from 'styled-components/native';
 
 import logoYoSoy from '../assets/images/logo-yosoy.png';
@@ -126,7 +126,7 @@ export default function Login() {
   const [cargando, setCargando] = useState(false);
 
   // Para pasar del campo usuario al de contraseña con la tecla "siguiente".
-  const refClave = useRef<TextInput>(null);
+  const refClave = useRef<TextInputInstance>(null);
 
   // El error se muestra como texto bajo los campos y no con Alert.alert, que
   // en web no funciona.

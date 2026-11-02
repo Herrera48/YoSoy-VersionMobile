@@ -1,5 +1,5 @@
 import { ReactNode, Ref } from 'react';
-import { TextInput, TextInputProps } from 'react-native';
+import { TextInputInstance, TextInputProps } from 'react-native';
 import styled from 'styled-components/native';
 
 import { theme } from '../constants/theme';
@@ -13,7 +13,7 @@ interface CampoTextoProps extends TextInputProps {
   etiqueta: string;
   ayuda?: string;
   accesorio?: ReactNode;
-  ref?: Ref<TextInput>;
+  ref?: Ref<TextInputInstance>;
 }
 
 const Contenedor = styled.View`
