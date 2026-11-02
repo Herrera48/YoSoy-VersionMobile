@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Link, useLocalSearchParams, useRouter } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, TextInputInstance } from 'react-native';
 import styled from 'styled-components/native';
 
@@ -118,6 +118,8 @@ export default function Login() {
   const router = useRouter();
   const { registrado } = useLocalSearchParams<{ registrado?: string }>();
   const guardarSesion = useSesionStore((state) => state.guardarSesion);
+  const sesionGuardada = useSesionStore((state) => state.usuario);
+  const hidratado = useSesionStore((state) => state.hidratado);
 
   const [usuario, setUsuario] = useState('');
   const [clave, setClave] = useState('');
@@ -125,8 +127,18 @@ export default function Login() {
   const [error, setError] = useState<string | null>(null);
   const [cargando, setCargando] = useState(false);
 
+  useEffect(() => {
+    if (hidratado && sesionGuardada) {
+      router.replace('/menu');
+    }
+  }, [hidratado, sesionGuardada]);
+
   // Para pasar del campo usuario al de contraseña con la tecla "siguiente".
   const refClave = useRef<TextInputInstance>(null);
+
+  if (!hidratado || sesionGuardada) {
+    return null;
+  }
 
   // El error se muestra como texto bajo los campos y no con Alert.alert, que
   // en web no funciona.
